@@ -67,6 +67,10 @@
     <button onclick="showFineAndShelfStatus()">Show Fine and Slot Report</button>
     <div id="fineShelfResult"></div>
 
+    <h2>Member Fine Summary</h2>
+    <button onclick="showMemberFineSummary()">Show Member Fine Summary</button>
+    <div id="memberFineSummary"></div>
+
     <h2>Issue/Return History</h2>
     <button onclick="showTransactionLog()">Show History</button>
     <div id="transactionLogResult"></div>
@@ -280,6 +284,35 @@
                 return;
             }
             document.getElementById('transactionLogResult').innerHTML = '<ul>' + transactionLog.map(item => `<li>${item}</li>`).join('') + '</ul>';
+        }
+
+        function showMemberFineSummary() {
+            const today = new Date();
+            const fineMap = {};
+
+            books.forEach(book => {
+                if (book.status === 'Issued' && book.dueDate) {
+                    const due = new Date(book.dueDate);
+                    const lateDays = Math.floor((today - due) / (1000 * 60 * 60 * 24));
+                    const fine = lateDays > 0 ? lateDays * 5 : 0;
+                    if (fine > 0) {
+                        fineMap[book.issuedTo] = (fineMap[book.issuedTo] || 0) + fine;
+                    }
+                }
+            });
+
+            const members = Object.keys(fineMap);
+            if (members.length === 0) {
+                document.getElementById('memberFineSummary').innerHTML = '<p>No member fines pending</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            members.forEach(member => {
+                html += `<li>${member}: Rs. ${fineMap[member]}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('memberFineSummary').innerHTML = html;
         }
     </script>
 </body>

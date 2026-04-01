@@ -25,6 +25,11 @@
         <input type="text" id="propId" placeholder="Property ID" required>
         <input type="text" id="propAddress" placeholder="Address" required>
         <input type="number" id="propPrice" placeholder="Price" required>
+        <select id="propStatus" required>
+            <option value="Available">Available</option>
+            <option value="Sold">Sold</option>
+            <option value="Rented">Rented</option>
+        </select>
         <select id="propType" required>
             <option value="">Select Type</option>
             <option value="Apartment">Apartment</option>
@@ -50,6 +55,11 @@
     <div id="priceResult"></div>
 
     <hr>
+    <h2>Property Type Summary</h2>
+    <button onclick="showPropertyTypeSummary()">Show Type Summary</button>
+    <div id="typeSummary"></div>
+
+    <hr>
     <h2>Property Listings</h2>
     <table border="1" id="propertyTable">
         <thead>
@@ -58,6 +68,7 @@
                 <th>Address</th>
                 <th>Price (Rs)</th>
                 <th>Type</th>
+                <th>Status</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -86,6 +97,7 @@
             const address = document.getElementById('propAddress').value;
             const price = document.getElementById('propPrice').value;
             const type = document.getElementById('propType').value;
+            const status = document.getElementById('propStatus').value;
 
             // Simple Duplicate ID Check
             if (properties.some(p => p.id === id)) {
@@ -93,7 +105,7 @@
                 return;
             }
 
-            const newProperty = { id, address, price, type };
+            const newProperty = { id, address, price, type, status };
             properties.push(newProperty);
             
             logActivity(`Added property with ID: ${id}`);
@@ -114,7 +126,11 @@
                     <td>${prop.address}</td>
                     <td>${prop.price}</td>
                     <td>${prop.type}</td>
-                    <td><button onclick="deleteProperty(${index})">Delete</button></td>
+                    <td>${prop.status}</td>
+                    <td>
+                        <button onclick="updatePropertyStatus(${index})">Next Status</button>
+                        <button onclick="deleteProperty(${index})">Delete</button>
+                    </td>
                 `;
                 tbody.appendChild(row);
             });
@@ -124,6 +140,15 @@
             } else {
                 document.getElementById('listMessage').innerText = '';
             }
+        }
+
+        function updatePropertyStatus(index) {
+            const flow = ['Available', 'Rented', 'Sold'];
+            const current = properties[index].status;
+            const currentIndex = flow.indexOf(current);
+            properties[index].status = flow[(currentIndex + 1) % flow.length];
+            displayProperties();
+            logActivity(`Updated property status for ${properties[index].id} to ${properties[index].status}`);
         }
 
         // Delete Logic
@@ -177,6 +202,30 @@
             html += '</ul>';
             document.getElementById('priceResult').innerHTML = html;
             logActivity(`Price query between ${min} and ${max}`);
+        }
+
+        function showPropertyTypeSummary() {
+            if (properties.length === 0) {
+                document.getElementById('typeSummary').innerHTML = '<p>No properties available</p>';
+                return;
+            }
+
+            const map = {};
+            properties.forEach(prop => {
+                if (!map[prop.type]) {
+                    map[prop.type] = { count: 0, totalPrice: 0 };
+                }
+                map[prop.type].count += 1;
+                map[prop.type].totalPrice += parseFloat(prop.price);
+            });
+
+            let html = '<ul>';
+            for (const type in map) {
+                const avg = map[type].totalPrice / map[type].count;
+                html += `<li>${type}: ${map[type].count} properties | Avg Price: Rs. ${avg.toFixed(2)}</li>`;
+            }
+            html += '</ul>';
+            document.getElementById('typeSummary').innerHTML = html;
         }
 
         // Utility: Logging

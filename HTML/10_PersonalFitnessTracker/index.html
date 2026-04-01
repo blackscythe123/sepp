@@ -25,6 +25,11 @@
         <input type="text" id="workName" placeholder="Exercise Name" required>
         <input type="number" id="workDuration" placeholder="Duration (mins)" required>
         <input type="number" id="workCalories" placeholder="Calories Burned" required>
+        <select id="workIntensity" required>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+        </select>
         <button type="submit">Log Workout</button>
     </form>
     <p id="workMessage"></p>
@@ -49,6 +54,8 @@
                 <th>Exercise</th>
                 <th>Duration (mins)</th>
                 <th>Calories</th>
+                <th>Intensity</th>
+                <th>Intensity Score</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -68,6 +75,7 @@
         // State management
         let workouts = [];
         let logs = [];
+        let bmiHistory = [];
 
         // Workout Logging Logic
         document.getElementById('workoutForm').addEventListener('submit', function(e) {
@@ -76,8 +84,15 @@
             const name = document.getElementById('workName').value;
             const duration = document.getElementById('workDuration').value;
             const calories = document.getElementById('workCalories').value;
+            const intensity = document.getElementById('workIntensity').value;
 
-            const newWorkout = { name, duration, calories };
+            const newWorkout = {
+                name,
+                duration,
+                calories,
+                intensity,
+                loggedAt: new Date()
+            };
             workouts.push(newWorkout);
             
             logAction(`Logged workout: ${name} (${duration} mins)`);
@@ -92,11 +107,15 @@
             tbody.innerHTML = '';
 
             workouts.forEach((work, index) => {
+                const intensityFactor = work.intensity === 'Low' ? 1 : work.intensity === 'Medium' ? 2 : 3;
+                const intensityScore = parseFloat(work.duration) * intensityFactor;
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${work.name}</td>
                     <td>${work.duration}</td>
                     <td>${work.calories}</td>
+                    <td>${work.intensity}</td>
+                    <td>${intensityScore.toFixed(2)}</td>
                     <td><button onclick="deleteWorkout(${index})">Delete</button></td>
                 `;
                 tbody.appendChild(row);
@@ -134,7 +153,15 @@
                 else if (bmi < 30) category = 'Overweight';
                 else category = 'Obese';
 
-                resultDiv.innerHTML = `<p><strong>BMI: ${bmi}</strong> (${category})</p>`;
+                const previous = bmiHistory.length > 0 ? bmiHistory[bmiHistory.length - 1].bmi : null;
+                bmiHistory.push({ bmi: parseFloat(bmi), category: category, timestamp: new Date() });
+
+                let trend = 'First Record';
+                if (previous !== null) {
+                    trend = parseFloat(bmi) > previous ? 'Increased' : parseFloat(bmi) < previous ? 'Decreased' : 'No Change';
+                }
+
+                resultDiv.innerHTML = `<p><strong>BMI: ${bmi}</strong> (${category}) | Trend: ${trend}</p>`;
                 logAction(`Calculated BMI: ${bmi} (${category})`);
             } else {
                 resultDiv.innerHTML = '<p style="color: red;">Please enter valid weight and height!</p>';
@@ -151,8 +178,16 @@
             const totalCalories = workouts.reduce((sum, w) => sum + parseFloat(w.calories), 0);
             const avgCalories = totalCalories / workouts.length;
 
+            const now = new Date();
+            const sevenDaysAgo = new Date(now);
+            sevenDaysAgo.setDate(now.getDate() - 7);
+            const weeklyWorkouts = workouts.filter(w => new Date(w.loggedAt) >= sevenDaysAgo);
+            const weeklyDuration = weeklyWorkouts.reduce((sum, w) => sum + parseFloat(w.duration), 0);
+            const weeklyCalories = weeklyWorkouts.reduce((sum, w) => sum + parseFloat(w.calories), 0);
+
             document.getElementById('workoutSummary').innerHTML =
-                `<p>Total Workouts: ${workouts.length} | Total Duration: ${totalDuration} mins | Total Calories: ${totalCalories} | Avg Calories/Workout: ${avgCalories.toFixed(2)}</p>`;
+                `<p>Total Workouts: ${workouts.length} | Total Duration: ${totalDuration} mins | Total Calories: ${totalCalories} | Avg Calories/Workout: ${avgCalories.toFixed(2)}</p>
+                 <p>Last 7 Days -> Workouts: ${weeklyWorkouts.length} | Duration: ${weeklyDuration} mins | Calories: ${weeklyCalories}</p>`;
         }
 
         // Utility: Logging

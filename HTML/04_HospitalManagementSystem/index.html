@@ -60,6 +60,8 @@
     <input type="text" id="doctorSearch" placeholder="Doctor Name">
     <button onclick="searchByDoctor()">Search Doctor Patients</button>
     <div id="doctorResult"></div>
+    <button onclick="showDoctorWorkload()">Show Doctor Workload</button>
+    <div id="doctorWorkload"></div>
 
     <h2>Critical and Status Summary</h2>
     <button onclick="showCriticalPatients()">Show Critical Patients</button>
@@ -277,6 +279,33 @@
             });
             html += '</ul>';
             document.getElementById('timelineResult').innerHTML = html;
+        }
+
+        function showDoctorWorkload() {
+            if (patients.length === 0) {
+                document.getElementById('doctorWorkload').innerHTML = '<p>No patients available</p>';
+                return;
+            }
+
+            const map = {};
+            patients.forEach(patient => {
+                if (!map[patient.doctor]) {
+                    map[patient.doctor] = { total: 0, critical: 0, admitted: 0, treatment: 0, discharged: 0 };
+                }
+                map[patient.doctor].total += 1;
+                if (patient.status === 'Critical') map[patient.doctor].critical += 1;
+                if (patient.status === 'Admitted') map[patient.doctor].admitted += 1;
+                if (patient.status === 'Under Treatment') map[patient.doctor].treatment += 1;
+                if (patient.status === 'Discharged') map[patient.doctor].discharged += 1;
+            });
+
+            let html = '<ul>';
+            for (const doctor in map) {
+                const d = map[doctor];
+                html += `<li>${doctor}: Total ${d.total} | Admitted ${d.admitted} | Under Treatment ${d.treatment} | Discharged ${d.discharged} | Critical ${d.critical}</li>`;
+            }
+            html += '</ul>';
+            document.getElementById('doctorWorkload').innerHTML = html;
         }
     </script>
 </body>

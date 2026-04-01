@@ -56,6 +56,10 @@
     <button onclick="showDepartmentSummary()">Show Summary</button>
     <div id="deptSummary"></div>
 
+    <h2>Performance Bands</h2>
+    <button onclick="showPerformanceBands()">Show Performance Bands</button>
+    <div id="performanceBands"></div>
+
     <h2>Student Marks Query</h2>
     <input type="text" id="marksQueryId" placeholder="Enter Student ID">
     <button onclick="showMarksQuery()">Show Marks</button>
@@ -212,13 +216,16 @@
             }
 
             const deptMap = {};
+            const cgpaMap = {};
             students.forEach(student => {
                 deptMap[student.dept] = (deptMap[student.dept] || 0) + 1;
+                cgpaMap[student.dept] = (cgpaMap[student.dept] || 0) + parseFloat(student.cgpa);
             });
 
             let html = '<p>Total Students: ' + students.length + '</p><ul>';
             for (const dept in deptMap) {
-                html += `<li>${dept}: ${deptMap[dept]}</li>`;
+                const avgCgpa = cgpaMap[dept] / deptMap[dept];
+                html += `<li>${dept}: ${deptMap[dept]} students | Avg CGPA: ${avgCgpa.toFixed(2)}</li>`;
             }
             html += '</ul>';
             document.getElementById('deptSummary').innerHTML = html;
@@ -235,6 +242,27 @@
 
             document.getElementById('marksQueryResult').innerHTML =
                 `<p>${student.name} | Mark1: ${student.mark1} | Mark2: ${student.mark2} | Mark3: ${student.mark3} | CGPA: ${student.cgpa}</p>`;
+        }
+
+        function showPerformanceBands() {
+            if (students.length === 0) {
+                document.getElementById('performanceBands').innerHTML = '<p>No students available</p>';
+                return;
+            }
+
+            let excellent = 0;
+            let good = 0;
+            let needsImprovement = 0;
+
+            students.forEach(student => {
+                const avg = (student.mark1 + student.mark2 + student.mark3) / 3;
+                if (avg >= 80) excellent += 1;
+                else if (avg >= 60) good += 1;
+                else needsImprovement += 1;
+            });
+
+            document.getElementById('performanceBands').innerHTML =
+                `<p>Excellent: ${excellent} | Good: ${good} | Needs Improvement: ${needsImprovement}</p>`;
         }
     </script>
 </body>
