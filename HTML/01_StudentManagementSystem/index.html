@@ -24,6 +24,9 @@
         <input type="text" id="studentName" placeholder="Student Name" required>
         <input type="email" id="studentEmail" placeholder="Email" required>
         <input type="text" id="studentDept" placeholder="Department" required>
+        <input type="number" id="studentMark1" placeholder="Mark 1" min="0" max="100" required>
+        <input type="number" id="studentMark2" placeholder="Mark 2" min="0" max="100" required>
+        <input type="number" id="studentMark3" placeholder="Mark 3" min="0" max="100" required>
         <button type="submit">Add Student</button>
     </form>
 
@@ -39,6 +42,7 @@
             <th>Name</th>
             <th>Email</th>
             <th>Department</th>
+            <th>CGPA</th>
             <th>Action</th>
         </tr>
     </table>
@@ -73,8 +77,21 @@
                 id: document.getElementById('studentId').value.trim(),
                 name: document.getElementById('studentName').value.trim(),
                 email: document.getElementById('studentEmail').value.trim(),
-                dept: document.getElementById('studentDept').value.trim()
+                dept: document.getElementById('studentDept').value.trim(),
+                mark1: parseFloat(document.getElementById('studentMark1').value),
+                mark2: parseFloat(document.getElementById('studentMark2').value),
+                mark3: parseFloat(document.getElementById('studentMark3').value)
             };
+
+            const marks = [student.mark1, student.mark2, student.mark3];
+            const marksValid = marks.every(m => !isNaN(m) && m >= 0 && m <= 100);
+            if (!marksValid) {
+                setMessage('Marks must be between 0 and 100', true);
+                return;
+            }
+
+            const average = (student.mark1 + student.mark2 + student.mark3) / 3;
+            student.cgpa = (average / 10).toFixed(2);
 
             if (students.some(s => s.id.toLowerCase() === student.id.toLowerCase())) {
                 setMessage('Student ID already exists', true);
@@ -94,7 +111,7 @@
 
         function displayStudents() {
             const table = document.getElementById('studentTable');
-            table.innerHTML = '<tr><th>Student ID</th><th>Name</th><th>Email</th><th>Department</th><th>Action</th></tr>';
+            table.innerHTML = '<tr><th>Student ID</th><th>Name</th><th>Email</th><th>Department</th><th>CGPA</th><th>Action</th></tr>';
             
             students.forEach((student, index) => {
                 const row = document.createElement('tr');
@@ -103,6 +120,7 @@
                     <td>${student.name}</td>
                     <td>${student.email}</td>
                     <td>${student.dept}</td>
+                    <td>${student.cgpa}</td>
                     <td><button onclick="deleteStudent(${index})">Delete</button></td>
                 `;
                 table.appendChild(row);
@@ -126,7 +144,7 @@
             if (results.length > 0) {
                 let html = '<h3>Found Students:</h3><ul>';
                 results.forEach(result => {
-                    html += `<li>${result.id} - ${result.name} - ${result.email} - ${result.dept}</li>`;
+                    html += `<li>${result.id} - ${result.name} - ${result.email} - ${result.dept} - CGPA: ${result.cgpa}</li>`;
                 });
                 html += '</ul>';
                 document.getElementById('searchResult').innerHTML = html;

@@ -61,6 +61,10 @@
     <button onclick="showProjectSummary()">Show Summary</button>
     <div id="projectSummary"></div>
 
+    <h2>Workload by Assignee</h2>
+    <button onclick="showWorkloadSummary()">Show Workload</button>
+    <div id="workloadSummary"></div>
+
     <div id="message"></div>
 
     <script>
@@ -204,6 +208,26 @@
             const delayed = projects.filter(p => p.status === 'Delayed').length;
             document.getElementById('projectSummary').innerHTML =
                 `<p>Active: ${active} | Completed: ${completed} | Delayed: ${delayed}</p>`;
+        }
+
+        function showWorkloadSummary() {
+            if (tasks.length === 0) {
+                document.getElementById('workloadSummary').innerHTML = '<p>No tasks assigned</p>';
+                return;
+            }
+
+            const map = {};
+            tasks.forEach(task => {
+                map[task.assignee] = (map[task.assignee] || 0) + 1;
+            });
+
+            let html = '<ul>';
+            for (const assignee in map) {
+                html += `<li>${assignee}: ${map[assignee]} task(s)</li>`;
+            }
+            html += '</ul>';
+
+            document.getElementById('workloadSummary').innerHTML = html;
         }
     </script>
 </body>

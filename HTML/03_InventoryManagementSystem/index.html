@@ -48,6 +48,11 @@
     <button onclick="checkLowStock()">Check Low Stock</button>
     <div id="lowStockAlert"></div>
 
+    <h2>Search Product</h2>
+    <input type="text" id="searchProductInput" placeholder="Product ID or Name">
+    <button onclick="searchProduct()">Search</button>
+    <div id="searchProductResult"></div>
+
     <h2>Inventory Summary</h2>
     <button onclick="showInventorySummary()">Show Summary</button>
     <div id="inventorySummary"></div>
@@ -161,6 +166,25 @@
 
             document.getElementById('inventorySummary').innerHTML =
                 `<p>Total Products: ${totalProducts} | Total Units: ${totalUnits} | Total Inventory Value: ${totalValue.toFixed(2)}</p>`;
+        }
+
+        function searchProduct() {
+            const key = document.getElementById('searchProductInput').value.trim().toLowerCase();
+            const filtered = products.filter(product =>
+                product.id.toLowerCase().includes(key) || product.name.toLowerCase().includes(key)
+            );
+
+            if (filtered.length === 0) {
+                document.getElementById('searchProductResult').innerHTML = '<p>No matching products</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            filtered.forEach(product => {
+                html += `<li>${product.id} - ${product.name} - Qty: ${product.quantity} - Price: ${product.price}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('searchProductResult').innerHTML = html;
         }
     </script>
 </body>

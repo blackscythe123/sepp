@@ -58,6 +58,10 @@
     <button onclick="showBookSummary()">Show Summary</button>
     <div id="summary"></div>
 
+    <h2>Overdue Books</h2>
+    <button onclick="showOverdueBooks()">Show Overdue</button>
+    <div id="overdueResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -204,6 +208,23 @@
             const available = total - issued;
             document.getElementById('summary').innerHTML =
                 `<p>Total: ${total} | Available: ${available} | Issued: ${issued}</p>`;
+        }
+
+        function showOverdueBooks() {
+            const today = new Date();
+            const overdue = books.filter(book => book.status === 'Issued' && book.dueDate && new Date(book.dueDate) < today);
+
+            if (overdue.length === 0) {
+                document.getElementById('overdueResult').innerHTML = '<p>No overdue books</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            overdue.forEach(book => {
+                html += `<li>${book.id} - ${book.title} - Issued to ${book.issuedTo} - Due: ${book.dueDate}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('overdueResult').innerHTML = html;
         }
     </script>
 </body>

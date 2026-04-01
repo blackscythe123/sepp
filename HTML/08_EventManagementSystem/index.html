@@ -54,6 +54,7 @@
             <th>Participant Name</th>
             <th>Email</th>
             <th>Registration Date</th>
+            <th>Checked In</th>
             <th>Action</th>
         </tr>
     </table>
@@ -72,6 +73,12 @@
     <input type="date" id="filterDate">
     <button onclick="filterEventsByDate()">Filter</button>
     <div id="filterResult"></div>
+
+    <h2>Attendance Check-In</h2>
+    <input type="text" id="checkinEventId" placeholder="Event ID">
+    <input type="email" id="checkinEmail" placeholder="Participant Email">
+    <button onclick="checkInParticipant()">Check In</button>
+    <div id="attendanceSummary"></div>
 
     <div id="message"></div>
 
@@ -155,7 +162,8 @@
                     eventId: eventId,
                     name: name,
                     email: email,
-                    regDate: new Date().toLocaleDateString()
+                    regDate: new Date().toLocaleDateString(),
+                    checkedIn: false
                 };
                 
                 participants.push(participant);
@@ -182,7 +190,7 @@
 
         function displayParticipants() {
             const table = document.getElementById('participantTable');
-            table.innerHTML = '<tr><th>Event ID</th><th>Participant Name</th><th>Email</th><th>Registration Date</th><th>Action</th></tr>';
+            table.innerHTML = '<tr><th>Event ID</th><th>Participant Name</th><th>Email</th><th>Registration Date</th><th>Checked In</th><th>Action</th></tr>';
             
             participants.forEach((participant, index) => {
                 const row = document.createElement('tr');
@@ -191,6 +199,7 @@
                     <td>${participant.name}</td>
                     <td>${participant.email}</td>
                     <td>${participant.regDate}</td>
+                    <td>${participant.checkedIn ? 'Yes' : 'No'}</td>
                     <td><button onclick="removeParticipant(${index})">Remove</button></td>
                 `;
                 table.appendChild(row);
@@ -260,6 +269,40 @@
             });
             html += '</ul>';
             document.getElementById('filterResult').innerHTML = html;
+        }
+
+        function checkInParticipant() {
+            const eventId = document.getElementById('checkinEventId').value.trim();
+            const email = document.getElementById('checkinEmail').value.trim().toLowerCase();
+            const participant = participants.find(p => p.eventId === eventId && p.email.toLowerCase() === email);
+
+            if (!participant) {
+                setMessage('Participant not found for this event', true);
+                return;
+            }
+
+            participant.checkedIn = true;
+            setMessage('Participant checked in', false);
+            showAttendanceSummary();
+        }
+
+        function showAttendanceSummary() {
+            const summary = {};
+            participants.forEach(p => {
+                if (!summary[p.eventId]) {
+                    summary[p.eventId] = { total: 0, checkedIn: 0 };
+                }
+                summary[p.eventId].total += 1;
+                if (p.checkedIn) summary[p.eventId].checkedIn += 1;
+            });
+
+            let html = '<h3>Attendance Summary:</h3><ul>';
+            for (const eventId in summary) {
+                const s = summary[eventId];
+                html += `<li>${eventId}: ${s.checkedIn}/${s.total} checked in</li>`;
+            }
+            html += '</ul>';
+            document.getElementById('attendanceSummary').innerHTML = html;
         }
     </script>
 </body>

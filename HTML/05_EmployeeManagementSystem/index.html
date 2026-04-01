@@ -59,6 +59,10 @@
     <button onclick="salarySummary()">Show Payroll Summary</button>
     <div id="salarySummaryResult"></div>
 
+    <h2>Highest Earner by Department</h2>
+    <button onclick="highestEarnerByDept()">Show Highest Earners</button>
+    <div id="highestEarnerResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -183,6 +187,22 @@
             }
             result += '</ul>';
             document.getElementById('salarySummaryResult').innerHTML = result;
+        }
+
+        function highestEarnerByDept() {
+            const top = {};
+            employees.forEach(emp => {
+                if (!top[emp.dept] || emp.salary > top[emp.dept].salary) {
+                    top[emp.dept] = emp;
+                }
+            });
+
+            let result = '<h3>Highest Earner by Department:</h3><ul>';
+            for (const dept in top) {
+                result += `<li>${dept}: ${top[dept].name} (${top[dept].salary.toFixed(2)})</li>`;
+            }
+            result += '</ul>';
+            document.getElementById('highestEarnerResult').innerHTML = result;
         }
     </script>
 </body>
