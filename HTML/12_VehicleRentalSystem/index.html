@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicle Rental System</title>
+</head>
+<body>
+    <h1>Vehicle Rental System</h1>
+    <p>Manage your fleet and bookings efficiently.</p>
+
+    <hr>
+    <h2>Add Vehicle to Fleet</h2>
+    <form id="vehicleForm">
+        <input type="text" id="vehId" placeholder="Vehicle ID" required>
+        <input type="text" id="vehModel" placeholder="Model Name" required>
+        <input type="number" id="vehRate" placeholder="Daily Rate (Rs)" required>
+        <button type="submit">Add Vehicle</button>
+    </form>
+    <p id="vehMessage"></p>
+
+    <hr>
+    <h2>Process Rental</h2>
+    <input type="text" id="rentId" placeholder="Vehicle ID to Rent">
+    <input type="number" id="rentDays" placeholder="Number of Days">
+    <button onclick="processRental()">Rent Vehicle</button>
+    <div id="rentalResult"></div>
+
+    <hr>
+    <h2>Fleet Status</h2>
+    <table border="1" id="fleetTable">
+        <thead>
+            <tr>
+                <th>Vehicle ID</th>
+                <th>Model</th>
+                <th>Daily Rate</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+    <p id="listMessage"></p>
+
+    <hr>
+    <h2>Activity Log</h2>
+    <ul id="activityLog">
+        <!-- Log entries will appear here -->
+    </ul>
+
+    <script>
+        // State management
+        let fleet = [];
+        let logs = [];
+
+        // Fleet Management Logic
+        document.getElementById('vehicleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('vehId').value;
+            const model = document.getElementById('vehModel').value;
+            const rate = parseFloat(document.getElementById('vehRate').value);
+
+            if (fleet.some(v => v.id === id)) {
+                showMessage('vehMessage', 'Error: Vehicle ID already exists!', 'red');
+                return;
+            }
+
+            const newVehicle = { id, model, rate, status: 'Available' };
+            fleet.push(newVehicle);
+            
+            logAction(`Added vehicle: ${id} (${model})`);
+            displayFleet();
+            showMessage('vehMessage', 'Vehicle added successfully!', 'green');
+            this.reset();
+        });
+
+        // Display Logic
+        function displayFleet() {
+            const tbody = document.querySelector('#fleetTable tbody');
+            tbody.innerHTML = '';
+
+            fleet.forEach((veh, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${veh.id}</td>
+                    <td>${veh.model}</td>
+                    <td>${veh.rate}</td>
+                    <td style="color: ${veh.status === 'Available' ? 'green' : 'red'}">${veh.status}</td>
+                    <td>
+                        <button onclick="toggleStatus(${index})">${veh.status === 'Available' ? 'Rent' : 'Return'}</button>
+                        <button onclick="deleteVehicle(${index})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (fleet.length === 0) {
+                document.getElementById('listMessage').innerText = 'No vehicles in fleet.';
+            } else {
+                document.getElementById('listMessage').innerText = '';
+            }
+        }
+
+        // Status Toggle Logic
+        function toggleStatus(index) {
+            const veh = fleet[index];
+            const newStatus = veh.status === 'Available' ? 'Rented' : 'Available';
+            veh.status = newStatus;
+            logAction(`Changed status of ${veh.id} to ${newStatus}`);
+            displayFleet();
+        }
+
+        // Rental Processing Logic
+        function processRental() {
+            const id = document.getElementById('rentId').value;
+            const days = parseInt(document.getElementById('rentDays').value);
+            const veh = fleet.find(v => v.id === id);
+            const resultDiv = document.getElementById('rentalResult');
+
+            if (veh && days > 0) {
+                if (veh.status === 'Rented') {
+                    resultDiv.innerHTML = '<p style="color: red;">Error: Vehicle is already rented!</p>';
+                    return;
+                }
+                const total = veh.rate * days;
+                resultDiv.innerHTML = `
+                    <p style="color: blue;"><strong>Rental Confirmed!</strong></p>
+                    <p>Vehicle: ${veh.model} (${veh.id})</p>
+                    <p>Total Cost: Rs. ${total}</p>
+                `;
+                veh.status = 'Rented';
+                logAction(`Rental processed for ${id} for ${days} days. Total: Rs. ${total}`);
+                displayFleet();
+            } else {
+                resultDiv.innerHTML = '<p style="color: red;">Error: Invalid Vehicle ID or Days!</p>';
+            }
+        }
+
+        // Delete Logic
+        function deleteVehicle(index) {
+            const id = fleet[index].id;
+            if (confirm(`Remove vehicle ${id} from fleet?`)) {
+                fleet.splice(index, 1);
+                logAction(`Deleted vehicle: ${id}`);
+                displayFleet();
+            }
+        }
+
+        // Utility: Logging
+        function logAction(action) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `${timestamp} - ${action}`;
+            logs.push(entry);
+            
+            const logList = document.getElementById('activityLog');
+            const li = document.createElement('li');
+            li.innerText = entry;
+            logList.prepend(li);
+        }
+
+        // Utility: Messages
+        function showMessage(id, text, color) {
+            const el = document.getElementById(id);
+            el.innerText = text;
+            el.style.color = color;
+            setTimeout(() => { el.innerText = ''; }, 3000);
+        }
+    </script>
+</body>
+</html>

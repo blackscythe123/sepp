@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>E-Learning Course Platform</title>
+</head>
+<body>
+    <h1>E-Learning Course Platform</h1>
+    <p>Manage courses and student enrollments.</p>
+
+    <hr>
+    <h2>Instructor Section: Add Course</h2>
+    <form id="courseForm">
+        <input type="text" id="courseId" placeholder="Course ID" required>
+        <input type="text" id="courseName" placeholder="Course Name" required>
+        <input type="text" id="instructorName" placeholder="Instructor Name" required>
+        <button type="submit">Add Course</button>
+    </form>
+    <p id="courseMessage"></p>
+
+    <hr>
+    <h2>Course List</h2>
+    <table border="1" id="courseTable">
+        <thead>
+            <tr>
+                <th>Course ID</th>
+                <th>Course Name</th>
+                <th>Instructor</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+
+    <hr>
+    <h2>Student Section: Enroll in Course</h2>
+    <form id="enrollForm">
+        <input type="text" id="studentName" placeholder="Student Name" required>
+        <select id="courseSelect" required>
+            <option value="">Select Course</option>
+            <!-- Courses will be populated here -->
+        </select>
+        <button type="submit">Enroll Now</button>
+    </form>
+    <p id="enrollMessage"></p>
+
+    <hr>
+    <h2>Enrollment History</h2>
+    <table border="1" id="enrollTable">
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Course Name</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+
+    <hr>
+    <h2>Activity Log</h2>
+    <ul id="activityLog">
+        <!-- Log entries will appear here -->
+    </ul>
+
+    <script>
+        // State management
+        let courses = [];
+        let enrollments = [];
+        let logs = [];
+
+        // Course Management Logic
+        document.getElementById('courseForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('courseId').value;
+            const name = document.getElementById('courseName').value;
+            const instructor = document.getElementById('instructorName').value;
+
+            if (courses.some(c => c.id === id)) {
+                showMessage('courseMessage', 'Error: Course ID already exists!', 'red');
+                return;
+            }
+
+            const newCourse = { id, name, instructor };
+            courses.push(newCourse);
+            
+            logAction(`Added course: ${id} - ${name}`);
+            displayCourses();
+            populateSelect();
+            showMessage('courseMessage', 'Course added successfully!', 'green');
+            this.reset();
+        });
+
+        // Display Courses Logic
+        function displayCourses() {
+            const tbody = document.querySelector('#courseTable tbody');
+            tbody.innerHTML = '';
+
+            courses.forEach((course, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${course.id}</td>
+                    <td>${course.name}</td>
+                    <td>${course.instructor}</td>
+                    <td><button onclick="deleteCourse(${index})">Delete</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Enrollment Logic
+        document.getElementById('enrollForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentName = document.getElementById('studentName').value;
+            const courseId = document.getElementById('courseSelect').value;
+            const course = courses.find(c => c.id === courseId);
+
+            if (course) {
+                const newEnrollment = { studentName, courseName: course.name };
+                enrollments.push(newEnrollment);
+                
+                logAction(`Student ${studentName} enrolled in ${course.name}`);
+                displayEnrollments();
+                showMessage('enrollMessage', 'Enrollment successful!', 'green');
+                this.reset();
+            } else {
+                showMessage('enrollMessage', 'Please select a valid course.', 'red');
+            }
+        });
+
+        // Display Enrollments Logic
+        function displayEnrollments() {
+            const tbody = document.querySelector('#enrollTable tbody');
+            tbody.innerHTML = '';
+
+            enrollments.forEach((en, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${en.studentName}</td>
+                    <td>${en.courseName}</td>
+                    <td><button onclick="deleteEnrollment(${index})">Remove</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Dropdown Logic
+        function populateSelect() {
+            const select = document.getElementById('courseSelect');
+            select.innerHTML = '<option value="">Select Course</option>';
+            courses.forEach(course => {
+                const opt = document.createElement('option');
+                opt.value = course.id;
+                opt.innerText = course.name;
+                select.appendChild(opt);
+            });
+        }
+
+        // Delete Logic
+        function deleteCourse(index) {
+            const id = courses[index].id;
+            if (confirm(`Delete course ${id}? (Enrollments won't be deleted)`)) {
+                courses.splice(index, 1);
+                logAction(`Deleted course: ${id}`);
+                displayCourses();
+                populateSelect();
+            }
+        }
+
+        function deleteEnrollment(index) {
+            if (confirm('Cancel this enrollment?')) {
+                const en = enrollments[index];
+                enrollments.splice(index, 1);
+                logAction(`Removed enrollment for: ${en.studentName}`);
+                displayEnrollments();
+            }
+        }
+
+        // Utility: Logging
+        function logAction(action) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `${timestamp} - ${action}`;
+            logs.push(entry);
+            
+            const logList = document.getElementById('activityLog');
+            const li = document.createElement('li');
+            li.innerText = entry;
+            logList.prepend(li);
+        }
+
+        // Utility: Messages
+        function showMessage(id, text, color) {
+            const el = document.getElementById(id);
+            el.innerText = text;
+            el.style.color = color;
+            setTimeout(() => { el.innerText = ''; }, 3000);
+        }
+    </script>
+</body>
+</html>

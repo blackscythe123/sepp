@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Freelance Job Portal</title>
+</head>
+<body>
+    <h1>Freelance Job Portal</h1>
+    <p>Connecting clients and freelancers.</p>
+
+    <hr>
+    <h2>Client Section: Post a Job</h2>
+    <form id="jobForm">
+        <input type="text" id="jobTitle" placeholder="Job Title" required>
+        <input type="number" id="jobBudget" placeholder="Budget (Rs)" required>
+        <input type="text" id="jobSkills" placeholder="Skills (comma separated)" required>
+        <button type="submit">Post Job</button>
+    </form>
+    <p id="postMessage"></p>
+
+    <hr>
+    <h2>Freelancer Section: Browse Jobs</h2>
+    <input type="text" id="searchQuery" placeholder="Search by Title or Skill">
+    <button onclick="searchJobs()">Search</button>
+    <div id="searchResult"></div>
+
+    <table border="1" id="jobTable">
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Budget (Rs)</th>
+                <th>Skills</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+    <p id="listMessage"></p>
+
+    <hr>
+    <h2>Application Log</h2>
+    <ul id="activityLog">
+        <!-- Log entries will appear here -->
+    </ul>
+
+    <script>
+        // State management
+        let jobs = [];
+        let logs = [];
+
+        // Job Posting Logic
+        document.getElementById('jobForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('jobTitle').value;
+            const budget = document.getElementById('jobBudget').value;
+            const skills = document.getElementById('jobSkills').value;
+
+            const newJob = { title, budget, skills };
+            jobs.push(newJob);
+            
+            logAction(`Posted job: ${title}`);
+            displayJobs();
+            showMessage('postMessage', 'Job posted successfully!', 'green');
+            this.reset();
+        });
+
+        // Display Logic
+        function displayJobs() {
+            const tbody = document.querySelector('#jobTable tbody');
+            tbody.innerHTML = '';
+
+            jobs.forEach((job, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${job.title}</td>
+                    <td>${job.budget}</td>
+                    <td>${job.skills}</td>
+                    <td>
+                        <button onclick="applyForJob(${index})">Apply</button>
+                        <button onclick="deleteJob(${index})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (jobs.length === 0) {
+                document.getElementById('listMessage').innerText = 'No jobs available.';
+            } else {
+                document.getElementById('listMessage').innerText = '';
+            }
+        }
+
+        // Apply Logic
+        function applyForJob(index) {
+            const jobTitle = jobs[index].title;
+            alert(`Application sent for: ${jobTitle}`);
+            logAction(`Applied for job: ${jobTitle}`);
+        }
+
+        // Delete Logic
+        function deleteJob(index) {
+            const jobTitle = jobs[index].title;
+            if (confirm(`Remove job posting: ${jobTitle}?`)) {
+                jobs.splice(index, 1);
+                logAction(`Deleted job: ${jobTitle}`);
+                displayJobs();
+            }
+        }
+
+        // Search Logic
+        function searchJobs() {
+            const query = document.getElementById('searchQuery').value.toLowerCase();
+            const filtered = jobs.filter(j => 
+                j.title.toLowerCase().includes(query) || 
+                j.skills.toLowerCase().includes(query)
+            );
+            
+            const resultDiv = document.getElementById('searchResult');
+            if (filtered.length > 0) {
+                resultDiv.innerHTML = `<p style="color: blue;">Found ${filtered.length} matching jobs.</p>`;
+                logAction(`Searched for: "${query}" (Found ${filtered.length})`);
+            } else {
+                resultDiv.innerHTML = '<p style="color: red;">No matching jobs found.</p>';
+                logAction(`Searched for: "${query}" (Not Found)`);
+            }
+        }
+
+        // Utility: Logging
+        function logAction(action) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `${timestamp} - ${action}`;
+            logs.push(entry);
+            
+            const logList = document.getElementById('activityLog');
+            const li = document.createElement('li');
+            li.innerText = entry;
+            logList.prepend(li);
+        }
+
+        // Utility: Messages
+        function showMessage(id, text, color) {
+            const el = document.getElementById(id);
+            el.innerText = text;
+            el.style.color = color;
+            setTimeout(() => { el.innerText = ''; }, 3000);
+        }
+    </script>
+</body>
+</html>

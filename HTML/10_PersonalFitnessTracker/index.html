@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Personal Fitness Tracker</title>
+</head>
+<body>
+    <h1>Personal Fitness Tracker</h1>
+    <p>Track your workouts and health metrics.</p>
+
+    <hr>
+    <h2>Log Workout</h2>
+    <form id="workoutForm">
+        <input type="text" id="workName" placeholder="Exercise Name" required>
+        <input type="number" id="workDuration" placeholder="Duration (mins)" required>
+        <input type="number" id="workCalories" placeholder="Calories Burned" required>
+        <button type="submit">Log Workout</button>
+    </form>
+    <p id="workMessage"></p>
+
+    <hr>
+    <h2>BMI Calculator</h2>
+    <input type="number" id="bmiWeight" placeholder="Weight (kg)" step="0.1">
+    <input type="number" id="bmiHeight" placeholder="Height (m)" step="0.01">
+    <button onclick="calculateBMI()">Calculate BMI</button>
+    <div id="bmiResult"></div>
+
+    <hr>
+    <h2>Workout History</h2>
+    <table border="1" id="workoutTable">
+        <thead>
+            <tr>
+                <th>Exercise</th>
+                <th>Duration (mins)</th>
+                <th>Calories</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+    <p id="listMessage"></p>
+
+    <hr>
+    <h2>Activity Log</h2>
+    <ul id="activityLog">
+        <!-- Log entries will appear here -->
+    </ul>
+
+    <script>
+        // State management
+        let workouts = [];
+        let logs = [];
+
+        // Workout Logging Logic
+        document.getElementById('workoutForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('workName').value;
+            const duration = document.getElementById('workDuration').value;
+            const calories = document.getElementById('workCalories').value;
+
+            const newWorkout = { name, duration, calories };
+            workouts.push(newWorkout);
+            
+            logAction(`Logged workout: ${name} (${duration} mins)`);
+            displayWorkouts();
+            showMessage('workMessage', 'Workout logged!', 'green');
+            this.reset();
+        });
+
+        // Display Logic
+        function displayWorkouts() {
+            const tbody = document.querySelector('#workoutTable tbody');
+            tbody.innerHTML = '';
+
+            workouts.forEach((work, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${work.name}</td>
+                    <td>${work.duration}</td>
+                    <td>${work.calories}</td>
+                    <td><button onclick="deleteWorkout(${index})">Delete</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (workouts.length === 0) {
+                document.getElementById('listMessage').innerText = 'No workouts logged.';
+            } else {
+                document.getElementById('listMessage').innerText = '';
+            }
+        }
+
+        // Delete Logic
+        function deleteWorkout(index) {
+            const workName = workouts[index].name;
+            if (confirm(`Delete workout: ${workName}?`)) {
+                workouts.splice(index, 1);
+                logAction(`Deleted workout: ${workName}`);
+                displayWorkouts();
+            }
+        }
+
+        // BMI Logic
+        function calculateBMI() {
+            const weight = parseFloat(document.getElementById('bmiWeight').value);
+            const height = parseFloat(document.getElementById('bmiHeight').value);
+            const resultDiv = document.getElementById('bmiResult');
+
+            if (weight > 0 && height > 0) {
+                const bmi = (weight / (height * height)).toFixed(2);
+                let category = '';
+                
+                if (bmi < 18.5) category = 'Underweight';
+                else if (bmi < 25) category = 'Normal';
+                else if (bmi < 30) category = 'Overweight';
+                else category = 'Obese';
+
+                resultDiv.innerHTML = `<p><strong>BMI: ${bmi}</strong> (${category})</p>`;
+                logAction(`Calculated BMI: ${bmi} (${category})`);
+            } else {
+                resultDiv.innerHTML = '<p style="color: red;">Please enter valid weight and height!</p>';
+            }
+        }
+
+        // Utility: Logging
+        function logAction(action) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `${timestamp} - ${action}`;
+            logs.push(entry);
+            
+            const logList = document.getElementById('activityLog');
+            const li = document.createElement('li');
+            li.innerText = entry;
+            logList.prepend(li);
+        }
+
+        // Utility: Messages
+        function showMessage(id, text, color) {
+            const el = document.getElementById(id);
+            el.innerText = text;
+            el.style.color = color;
+            setTimeout(() => { el.innerText = ''; }, 3000);
+        }
+    </script>
+</body>
+</html>
