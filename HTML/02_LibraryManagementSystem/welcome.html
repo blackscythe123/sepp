@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Library Management System - Welcome</title>
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
+
+        window.onload = function () {
+            const username = sessionStorage.getItem('username') || 'User';
+            document.getElementById('welcomeText').innerText = 'Welcome, ' + username + '!';
+        };
+    </script>
+</head>
+<body>
+    <h1>Library Management System</h1>
+    <h2 id="welcomeText">Welcome!</h2>
+    <p>This is the welcome page. Continue to the system module.</p>
+    <button onclick="window.location.href='index.html'">Go to System</button>
+    <button onclick="logout()">Logout</button>
+</body>
+</html>

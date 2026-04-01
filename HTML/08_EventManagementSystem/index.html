@@ -1,10 +1,22 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>Event Management System</title>
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 <body>
     <h1>Event Management System</h1>
+    <p><a href="welcome.html">Welcome Page</a> <button onclick="logout()">Logout</button></p>
     
     <h2>Create Event</h2>
     <form id="eventForm">
@@ -154,3 +166,4 @@
     </script>
 </body>
 </html>
+

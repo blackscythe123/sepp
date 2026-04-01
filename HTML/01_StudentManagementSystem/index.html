@@ -1,10 +1,22 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>Student Management System</title>
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 <body>
     <h1>Student Management System</h1>
+    <p><a href="welcome.html">Welcome Page</a> <button onclick="logout()">Logout</button></p>
     
     <h2>Add Student</h2>
     <form id="studentForm">
@@ -90,3 +102,4 @@
     </script>
 </body>
 </html>
+
