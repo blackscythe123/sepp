@@ -6,6 +6,7 @@
         if (sessionStorage.getItem('isLoggedIn') !== 'true') {
             window.location.href = 'login.html';
         }
+    
 
         function logout() {
             sessionStorage.removeItem('isLoggedIn');
@@ -349,6 +350,64 @@
             document.getElementById('eventIdSearchResult').innerHTML =
                 `<p>${event.id} - ${event.name} - ${event.date} - ${event.venue} - ${event.registrations}/${event.capacity}</p>`;
         }
+
+        const DB_NAME = 'EventManagementSystemDB';
+        const STORE_NAME = 'state';
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = function() { resolve(request.result); };
+                request.onerror = function() { reject(request.error); };
+            });
+        }
+
+        async function saveState() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put({ id: 'appState', events: events, participants: participants, waitlist: waitlist });
+                tx.oncomplete = function() { resolve(); };
+                tx.onerror = function() { reject(tx.error); };
+            });
+        }
+
+        async function loadState() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const request = tx.objectStore(STORE_NAME).get('appState');
+                request.onsuccess = function() {
+                    const data = request.result;
+                    if (data) {
+                        events = data.events || [];
+                        participants = data.participants || [];
+                        waitlist = data.waitlist || [];
+                    }
+                    resolve();
+                };
+                request.onerror = function() { reject(request.error); };
+            });
+        }
+
+        async function initPersistence() {
+            await loadState();
+            displayEvents();
+            displayParticipants();
+            displayWaitlist();
+            showAttendanceSummary();
+            showEventOccupancy();
+        }
+
+        setInterval(function() { saveState().catch(function() {}); }, 1000);
+        window.addEventListener('beforeunload', function() { saveState().catch(function() {}); });
+        initPersistence().catch(function() {});
     </script>
 </body>
 </html>

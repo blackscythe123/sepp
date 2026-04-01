@@ -228,6 +228,67 @@
             document.getElementById('typeSummary').innerHTML = html;
         }
 
+        const DB_NAME = 'RealEstateMarketplaceDB';
+        const STORE_NAME = 'state';
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = function() { resolve(request.result); };
+                request.onerror = function() { reject(request.error); };
+            });
+        }
+
+        async function saveState() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put({ id: 'appState', properties: properties, activities: activities });
+                tx.oncomplete = function() { resolve(); };
+                tx.onerror = function() { reject(tx.error); };
+            });
+        }
+
+        async function loadState() {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const request = tx.objectStore(STORE_NAME).get('appState');
+                request.onsuccess = function() {
+                    const data = request.result;
+                    if (data) {
+                        properties = data.properties || [];
+                        activities = data.activities || [];
+                    }
+                    resolve();
+                };
+                request.onerror = function() { reject(request.error); };
+            });
+        }
+
+        async function initPersistence() {
+            await loadState();
+            displayProperties();
+            showPropertyTypeSummary();
+            const logList = document.getElementById('activityLog');
+            logList.innerHTML = '';
+            activities.forEach(entry => {
+                const li = document.createElement('li');
+                li.innerText = entry;
+                logList.appendChild(li);
+            });
+        }
+
+        setInterval(function() { saveState().catch(function() {}); }, 1000);
+        window.addEventListener('beforeunload', function() { saveState().catch(function() {}); });
+        initPersistence().catch(function() {});
+
         // Utility: Logging
         function logActivity(action) {
             const now = new Date();
