@@ -25,6 +25,7 @@
         <input type="text" id="courseId" placeholder="Course ID" required>
         <input type="text" id="courseName" placeholder="Course Name" required>
         <input type="text" id="instructorName" placeholder="Instructor Name" required>
+        <input type="number" id="courseFee" placeholder="Course Fee (Rs)" required>
         <button type="submit">Add Course</button>
     </form>
     <p id="courseMessage"></p>
@@ -37,6 +38,7 @@
                 <th>Course ID</th>
                 <th>Course Name</th>
                 <th>Instructor</th>
+                <th>Fee (Rs)</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -96,13 +98,14 @@
             const id = document.getElementById('courseId').value;
             const name = document.getElementById('courseName').value;
             const instructor = document.getElementById('instructorName').value;
+            const fee = parseFloat(document.getElementById('courseFee').value);
 
             if (courses.some(c => c.id === id)) {
                 showMessage('courseMessage', 'Error: Course ID already exists!', 'red');
                 return;
             }
 
-            const newCourse = { id, name, instructor };
+            const newCourse = { id, name, instructor, fee };
             courses.push(newCourse);
             
             logAction(`Added course: ${id} - ${name}`);
@@ -123,6 +126,7 @@
                     <td>${course.id}</td>
                     <td>${course.name}</td>
                     <td>${course.instructor}</td>
+                    <td>${course.fee}</td>
                     <td><button onclick="deleteCourse(${index})">Delete</button></td>
                 `;
                 tbody.appendChild(row);
@@ -211,7 +215,11 @@
 
             let html = '<ul>';
             for (const courseName in summary) {
-                html += `<li>${courseName}: ${summary[courseName]} student(s)</li>`;
+                const count = summary[courseName];
+                const course = courses.find(c => c.name === courseName);
+                const revenue = course ? (count * course.fee) : 0;
+                
+                html += `<li><strong>${courseName}:</strong> ${count} student(s) | <strong>Revenue:</strong> Rs. ${revenue}</li>`;
             }
             html += '</ul>';
             document.getElementById('enrollmentSummary').innerHTML = html;

@@ -23,6 +23,7 @@
     <h2>Client Section: Post a Job</h2>
     <form id="jobForm">
         <input type="text" id="jobTitle" placeholder="Job Title" required>
+        <input type="text" id="jobDescription" placeholder="Description" required>
         <input type="number" id="jobBudget" placeholder="Budget (Rs)" required>
         <input type="text" id="jobSkills" placeholder="Skills (comma separated)" required>
         <button type="submit">Post Job</button>
@@ -36,16 +37,16 @@
     <div id="searchResult"></div>
 
     <hr>
-    <h2>Budget Range Query</h2>
-    <input type="number" id="minBudget" placeholder="Min Budget">
-    <input type="number" id="maxBudget" placeholder="Max Budget">
-    <button onclick="filterByBudget()">Filter by Budget</button>
+    <h2>Budget Floor Query</h2>
+    <input type="number" id="minBudget" placeholder="Minimum Budget (Floor)">
+    <button onclick="filterByBudget()">Filter by Budget Floor</button>
     <div id="budgetResult"></div>
 
     <table border="1" id="jobTable">
         <thead>
             <tr>
                 <th>Job Title</th>
+                <th>Description</th>
                 <th>Budget (Rs)</th>
                 <th>Skills</th>
                 <th>Action</th>
@@ -73,10 +74,11 @@
             e.preventDefault();
             
             const title = document.getElementById('jobTitle').value;
+            const description = document.getElementById('jobDescription').value;
             const budget = document.getElementById('jobBudget').value;
             const skills = document.getElementById('jobSkills').value;
 
-            const newJob = { title, budget, skills };
+            const newJob = { title, description, budget, skills };
             jobs.push(newJob);
             
             logAction(`Posted job: ${title}`);
@@ -94,6 +96,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${job.title}</td>
+                    <td>${job.description}</td>
                     <td>${job.budget}</td>
                     <td>${job.skills}</td>
                     <td>
@@ -148,21 +151,20 @@
 
         function filterByBudget() {
             const min = parseFloat(document.getElementById('minBudget').value);
-            const max = parseFloat(document.getElementById('maxBudget').value);
-            const filtered = jobs.filter(j => parseFloat(j.budget) >= min && parseFloat(j.budget) <= max);
+            const filtered = jobs.filter(j => parseFloat(j.budget) >= min);
 
             if (filtered.length === 0) {
-                document.getElementById('budgetResult').innerHTML = '<p>No jobs in this budget range.</p>';
+                document.getElementById('budgetResult').innerHTML = '<p>No jobs above this budget floor.</p>';
                 return;
             }
 
             let html = '<ul>';
             filtered.forEach(job => {
-                html += `<li>${job.title} - Rs. ${job.budget} - ${job.skills}</li>`;
+                html += `<li>${job.title} - Rs. ${job.budget}</li>`;
             });
             html += '</ul>';
             document.getElementById('budgetResult').innerHTML = html;
-            logAction(`Budget query between ${min} and ${max}`);
+            logAction(`Budget query for floor: ${min}`);
         }
 
         // Utility: Logging
