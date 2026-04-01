@@ -57,26 +57,60 @@
         </tr>
     </table>
 
+    <h2>Project Summary</h2>
+    <button onclick="showProjectSummary()">Show Summary</button>
+    <div id="projectSummary"></div>
+
     <div id="message"></div>
 
     <script>
         let projects = [];
         let tasks = [];
 
+        function setMessage(text, isError) {
+            const color = isError ? 'red' : 'green';
+            document.getElementById('message').innerHTML = `<p style="color:${color}">${text}</p>`;
+        }
+
+        function isOverdue(project) {
+            if (!project.deadline) return false;
+            const today = new Date().toISOString().split('T')[0];
+            return project.deadline < today && project.status !== 'Completed';
+        }
+
+        function recalcProject(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            const projectTasks = tasks.filter(t => t.projectId === projectId);
+            const total = projectTasks.length;
+            const done = projectTasks.filter(t => t.status === 'Completed').length;
+
+            project.progress = total === 0 ? 0 : Math.round((done / total) * 100);
+            project.status = (total > 0 && done === total) ? 'Completed' : 'Active';
+            if (isOverdue(project)) project.status = 'Delayed';
+        }
+
         document.getElementById('projectForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const project = {
-                id: document.getElementById('projectId').value,
-                name: document.getElementById('projectName').value,
-                manager: document.getElementById('projectManager').value,
+                id: document.getElementById('projectId').value.trim(),
+                name: document.getElementById('projectName').value.trim(),
+                manager: document.getElementById('projectManager').value.trim(),
                 deadline: document.getElementById('projectDeadline').value,
                 status: 'Active',
                 progress: 0
             };
+
+            if (projects.some(p => p.id.toLowerCase() === project.id.toLowerCase())) {
+                setMessage('Project ID already exists', true);
+                return;
+            }
             
             projects.push(project);
             displayProjects();
+            setMessage('Project created successfully', false);
             this.reset();
         });
 
@@ -85,6 +119,7 @@
             table.innerHTML = '<tr><th>Project ID</th><th>Name</th><th>Manager</th><th>Deadline</th><th>Status</th><th>Progress</th><th>Action</th></tr>';
             
             projects.forEach((project, index) => {
+                recalcProject(project.id);
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${project.id}</td>
@@ -97,17 +132,23 @@
                 `;
                 table.appendChild(row);
             });
+
+            showProjectSummary();
         }
 
         function deleteProject(index) {
+            const projectId = projects[index].id;
             projects.splice(index, 1);
+            tasks = tasks.filter(task => task.projectId !== projectId);
             displayProjects();
+            displayTasks();
+            setMessage('Project deleted', false);
         }
 
         function addTask() {
-            const projectId = document.getElementById('projectIdTask').value;
-            const taskName = document.getElementById('taskName').value;
-            const assignee = document.getElementById('taskAssignee').value;
+            const projectId = document.getElementById('projectIdTask').value.trim();
+            const taskName = document.getElementById('taskName').value.trim();
+            const assignee = document.getElementById('taskAssignee').value.trim();
             
             const project = projects.find(p => p.id === projectId);
             
@@ -120,7 +161,9 @@
                 };
                 
                 tasks.push(task);
+                recalcProject(projectId);
                 displayTasks();
+                displayProjects();
                 document.getElementById('message').innerHTML = '<p>Task added successfully</p>';
                 document.getElementById('projectIdTask').value = '';
                 document.getElementById('taskName').value = '';
@@ -135,13 +178,14 @@
             table.innerHTML = '<tr><th>Project ID</th><th>Task Name</th><th>Assigned To</th><th>Status</th><th>Action</th></tr>';
             
             tasks.forEach((task, index) => {
+                const disabled = task.status === 'Completed' ? 'disabled' : '';
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${task.projectId}</td>
                     <td>${task.name}</td>
                     <td>${task.assignee}</td>
                     <td>${task.status}</td>
-                    <td><button onclick="completeTask(${index})">Complete</button></td>
+                    <td><button onclick="completeTask(${index})" ${disabled}>Complete</button></td>
                 `;
                 table.appendChild(row);
             });
@@ -149,7 +193,17 @@
 
         function completeTask(index) {
             tasks[index].status = 'Completed';
+            recalcProject(tasks[index].projectId);
             displayTasks();
+            displayProjects();
+        }
+
+        function showProjectSummary() {
+            const active = projects.filter(p => p.status === 'Active').length;
+            const completed = projects.filter(p => p.status === 'Completed').length;
+            const delayed = projects.filter(p => p.status === 'Delayed').length;
+            document.getElementById('projectSummary').innerHTML =
+                `<p>Active: ${active} | Completed: ${completed} | Delayed: ${delayed}</p>`;
         }
     </script>
 </body>

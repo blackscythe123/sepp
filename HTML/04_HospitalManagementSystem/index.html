@@ -52,29 +52,57 @@
     <button onclick="updateStatus()">Update Status</button>
 
     <h2>Search Patient</h2>
-    <input type="text" id="searchPatientId" placeholder="Enter Patient ID">
+    <input type="text" id="searchPatientId" placeholder="Enter Patient ID or Name">
     <button onclick="searchPatient()">Search</button>
     <div id="searchResult"></div>
+
+    <h2>Doctor Wise Patients</h2>
+    <input type="text" id="doctorSearch" placeholder="Doctor Name">
+    <button onclick="searchByDoctor()">Search Doctor Patients</button>
+    <div id="doctorResult"></div>
+
+    <h2>Critical and Status Summary</h2>
+    <button onclick="showCriticalPatients()">Show Critical Patients</button>
+    <button onclick="showStatusSummary()">Show Status Summary</button>
+    <div id="criticalResult"></div>
+    <div id="statusSummary"></div>
 
     <div id="message"></div>
 
     <script>
         let patients = [];
 
+        function setMessage(text, isError) {
+            const color = isError ? 'red' : 'green';
+            document.getElementById('message').innerHTML = `<p style="color:${color}">${text}</p>`;
+        }
+
         document.getElementById('patientForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const patient = {
-                id: document.getElementById('patientId').value,
-                name: document.getElementById('patientName').value,
-                age: document.getElementById('patientAge').value,
-                disease: document.getElementById('patientDisease').value,
-                doctor: document.getElementById('patientDoctor').value,
-                status: 'Admitted'
+                id: document.getElementById('patientId').value.trim(),
+                name: document.getElementById('patientName').value.trim(),
+                age: parseInt(document.getElementById('patientAge').value),
+                disease: document.getElementById('patientDisease').value.trim(),
+                doctor: document.getElementById('patientDoctor').value.trim(),
+                status: 'Admitted',
+                admitDate: new Date().toLocaleDateString()
             };
+
+            if (patients.some(p => p.id.toLowerCase() === patient.id.toLowerCase())) {
+                setMessage('Patient ID already exists', true);
+                return;
+            }
+
+            if (isNaN(patient.age) || patient.age <= 0) {
+                setMessage('Enter valid age', true);
+                return;
+            }
             
             patients.push(patient);
             displayPatients();
+            setMessage('Patient registered successfully', false);
             this.reset();
         });
 
@@ -95,11 +123,14 @@
                 `;
                 table.appendChild(row);
             });
+
+            showStatusSummary();
         }
 
         function deletePatient(index) {
             patients.splice(index, 1);
             displayPatients();
+            setMessage('Patient deleted', false);
         }
 
         function updateStatus() {
@@ -110,29 +141,76 @@
             if (patient) {
                 patient.status = newStatus;
                 displayPatients();
-                document.getElementById('message').innerHTML = '<p>Patient status updated</p>';
+                setMessage('Patient status updated', false);
             } else {
-                document.getElementById('message').innerHTML = '<p>Patient not found</p>';
+                setMessage('Patient not found', true);
             }
         }
 
         function searchPatient() {
-            const patientId = document.getElementById('searchPatientId').value;
-            const patient = patients.find(p => p.id === patientId);
+            const key = document.getElementById('searchPatientId').value.trim().toLowerCase();
+            const results = patients.filter(p =>
+                p.id.toLowerCase().includes(key) || p.name.toLowerCase().includes(key)
+            );
             
-            if (patient) {
-                document.getElementById('searchResult').innerHTML = `
-                    <h3>Patient Details:</h3>
-                    <p>ID: ${patient.id}</p>
-                    <p>Name: ${patient.name}</p>
-                    <p>Age: ${patient.age}</p>
-                    <p>Disease/Condition: ${patient.disease}</p>
-                    <p>Doctor: ${patient.doctor}</p>
-                    <p>Status: ${patient.status}</p>
-                `;
+            if (results.length > 0) {
+                let html = '<h3>Patient Details:</h3><ul>';
+                results.forEach(patient => {
+                    html += `<li>${patient.id} - ${patient.name} - ${patient.disease} - ${patient.status}</li>`;
+                });
+                html += '</ul>';
+                document.getElementById('searchResult').innerHTML = html;
             } else {
                 document.getElementById('searchResult').innerHTML = '<p>Patient not found</p>';
             }
+        }
+
+        function searchByDoctor() {
+            const doctor = document.getElementById('doctorSearch').value.trim().toLowerCase();
+            const results = patients.filter(p => p.doctor.toLowerCase().includes(doctor));
+
+            if (results.length === 0) {
+                document.getElementById('doctorResult').innerHTML = '<p>No patients for this doctor</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            results.forEach(patient => {
+                html += `<li>${patient.id} - ${patient.name} - ${patient.status}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('doctorResult').innerHTML = html;
+        }
+
+        function showCriticalPatients() {
+            const critical = patients.filter(p => p.status === 'Critical');
+            if (critical.length === 0) {
+                document.getElementById('criticalResult').innerHTML = '<p>No critical patients</p>';
+                return;
+            }
+
+            let html = '<h3>Critical Patients:</h3><ul>';
+            critical.forEach(patient => {
+                html += `<li>${patient.id} - ${patient.name} - Doctor: ${patient.doctor}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('criticalResult').innerHTML = html;
+        }
+
+        function showStatusSummary() {
+            const summary = {
+                'Admitted': 0,
+                'Under Treatment': 0,
+                'Discharged': 0,
+                'Critical': 0
+            };
+
+            patients.forEach(p => {
+                summary[p.status] = (summary[p.status] || 0) + 1;
+            });
+
+            document.getElementById('statusSummary').innerHTML =
+                `<p>Admitted: ${summary['Admitted']} | Under Treatment: ${summary['Under Treatment']} | Discharged: ${summary['Discharged']} | Critical: ${summary['Critical']}</p>`;
         }
     </script>
 </body>

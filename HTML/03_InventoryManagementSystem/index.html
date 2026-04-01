@@ -48,23 +48,43 @@
     <button onclick="checkLowStock()">Check Low Stock</button>
     <div id="lowStockAlert"></div>
 
+    <h2>Inventory Summary</h2>
+    <button onclick="showInventorySummary()">Show Summary</button>
+    <div id="inventorySummary"></div>
+
     <div id="message"></div>
 
     <script>
         let products = [];
 
+        function setMessage(text, isError) {
+            const color = isError ? 'red' : 'green';
+            document.getElementById('message').innerHTML = `<p style="color:${color}">${text}</p>`;
+        }
+
         document.getElementById('productForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const product = {
-                id: document.getElementById('productId').value,
-                name: document.getElementById('productName').value,
+                id: document.getElementById('productId').value.trim(),
+                name: document.getElementById('productName').value.trim(),
                 quantity: parseInt(document.getElementById('productQuantity').value),
                 price: parseFloat(document.getElementById('productPrice').value)
             };
+
+            if (products.some(p => p.id.toLowerCase() === product.id.toLowerCase())) {
+                setMessage('Product ID already exists', true);
+                return;
+            }
+
+            if (isNaN(product.quantity) || product.quantity < 0 || isNaN(product.price) || product.price < 0) {
+                setMessage('Quantity and price must be valid positive values', true);
+                return;
+            }
             
             products.push(product);
             displayProducts();
+            setMessage('Product added successfully', false);
             this.reset();
         });
 
@@ -85,24 +105,37 @@
                 `;
                 table.appendChild(row);
             });
+
+            showInventorySummary();
         }
 
         function deleteProduct(index) {
             products.splice(index, 1);
             displayProducts();
+            setMessage('Product deleted', false);
         }
 
         function updateStock() {
-            const productId = document.getElementById('updateProductId').value;
+            const productId = document.getElementById('updateProductId').value.trim();
             const quantityChange = parseInt(document.getElementById('updateQuantity').value);
             const product = products.find(p => p.id === productId);
             
             if (product) {
+                if (isNaN(quantityChange)) {
+                    setMessage('Enter a valid quantity change', true);
+                    return;
+                }
+
+                if (product.quantity + quantityChange < 0) {
+                    setMessage('Stock cannot be negative', true);
+                    return;
+                }
+
                 product.quantity += quantityChange;
                 displayProducts();
-                document.getElementById('message').innerHTML = '<p>Stock updated successfully</p>';
+                setMessage('Stock updated successfully', false);
             } else {
-                document.getElementById('message').innerHTML = '<p>Product not found</p>';
+                setMessage('Product not found', true);
             }
         }
 
@@ -119,6 +152,15 @@
             } else {
                 document.getElementById('lowStockAlert').innerHTML = '<p>All items have sufficient stock</p>';
             }
+        }
+
+        function showInventorySummary() {
+            const totalProducts = products.length;
+            const totalUnits = products.reduce((sum, product) => sum + product.quantity, 0);
+            const totalValue = products.reduce((sum, product) => sum + (product.quantity * product.price), 0);
+
+            document.getElementById('inventorySummary').innerHTML =
+                `<p>Total Products: ${totalProducts} | Total Units: ${totalUnits} | Total Inventory Value: ${totalValue.toFixed(2)}</p>`;
         }
     </script>
 </body>

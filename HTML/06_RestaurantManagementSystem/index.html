@@ -56,24 +56,51 @@
         </tr>
     </table>
 
+    <h2>Menu Category Filter</h2>
+    <input type="text" id="categoryFilter" placeholder="Category">
+    <button onclick="filterMenuByCategory()">Filter Menu</button>
+    <div id="categoryResult"></div>
+
+    <h2>Revenue Summary</h2>
+    <button onclick="showRevenueSummary()">Show Revenue</button>
+    <div id="revenueSummary"></div>
+
     <div id="message"></div>
 
     <script>
         let menuItems = [];
         let orders = [];
 
+        const statusFlow = ['Pending', 'Preparing', 'Ready', 'Delivered'];
+
+        function setMessage(text, isError) {
+            const color = isError ? 'red' : 'green';
+            document.getElementById('message').innerHTML = `<p style="color:${color}">${text}</p>`;
+        }
+
         document.getElementById('menuForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const item = {
-                id: document.getElementById('itemId').value,
-                name: document.getElementById('itemName').value,
-                category: document.getElementById('itemCategory').value,
+                id: document.getElementById('itemId').value.trim(),
+                name: document.getElementById('itemName').value.trim(),
+                category: document.getElementById('itemCategory').value.trim(),
                 price: parseFloat(document.getElementById('itemPrice').value)
             };
+
+            if (menuItems.some(m => m.id.toLowerCase() === item.id.toLowerCase())) {
+                setMessage('Item ID already exists', true);
+                return;
+            }
+
+            if (isNaN(item.price) || item.price <= 0) {
+                setMessage('Price must be greater than 0', true);
+                return;
+            }
             
             menuItems.push(item);
             displayMenu();
+            setMessage('Menu item added', false);
             this.reset();
         });
 
@@ -97,14 +124,25 @@
         function deleteMenuItem(index) {
             menuItems.splice(index, 1);
             displayMenu();
+            setMessage('Menu item deleted', false);
         }
 
         function placeOrder() {
-            const orderId = document.getElementById('orderId').value;
-            const itemId = document.getElementById('itemIdOrder').value;
+            const orderId = document.getElementById('orderId').value.trim();
+            const itemId = document.getElementById('itemIdOrder').value.trim();
             const qty = parseInt(document.getElementById('quantity').value);
             
             const item = menuItems.find(m => m.id === itemId);
+
+            if (orders.some(o => o.orderId.toLowerCase() === orderId.toLowerCase())) {
+                setMessage('Order ID already exists', true);
+                return;
+            }
+
+            if (isNaN(qty) || qty <= 0) {
+                setMessage('Quantity must be greater than 0', true);
+                return;
+            }
             
             if (item) {
                 const order = {
@@ -117,12 +155,12 @@
                 
                 orders.push(order);
                 displayOrders();
-                document.getElementById('message').innerHTML = '<p>Order placed successfully</p>';
+                setMessage('Order placed successfully', false);
                 document.getElementById('orderId').value = '';
                 document.getElementById('itemIdOrder').value = '';
                 document.getElementById('quantity').value = '';
             } else {
-                document.getElementById('message').innerHTML = '<p>Item not found in menu</p>';
+                setMessage('Item not found in menu', true);
             }
         }
 
@@ -131,6 +169,7 @@
             table.innerHTML = '<tr><th>Order ID</th><th>Item ID</th><th>Quantity</th><th>Total Amount</th><th>Status</th><th>Action</th></tr>';
             
             orders.forEach((order, index) => {
+                const nextDisabled = order.status === 'Delivered' ? 'disabled' : '';
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${order.orderId}</td>
@@ -138,15 +177,54 @@
                     <td>${order.quantity}</td>
                     <td>${order.totalAmount}</td>
                     <td>${order.status}</td>
-                    <td><button onclick="completeOrder(${index})">Complete</button></td>
+                    <td>
+                        <button onclick="advanceOrderStatus(${index})" ${nextDisabled}>Next Status</button>
+                        <button onclick="cancelOrder(${index})">Cancel</button>
+                    </td>
                 `;
                 table.appendChild(row);
             });
+
+            showRevenueSummary();
         }
 
-        function completeOrder(index) {
-            orders[index].status = 'Completed';
+        function advanceOrderStatus(index) {
+            const current = orders[index].status;
+            const currentIndex = statusFlow.indexOf(current);
+            if (currentIndex >= 0 && currentIndex < statusFlow.length - 1) {
+                orders[index].status = statusFlow[currentIndex + 1];
+            }
             displayOrders();
+        }
+
+        function cancelOrder(index) {
+            orders.splice(index, 1);
+            displayOrders();
+            setMessage('Order cancelled', false);
+        }
+
+        function filterMenuByCategory() {
+            const category = document.getElementById('categoryFilter').value.trim().toLowerCase();
+            const filtered = menuItems.filter(item => item.category.toLowerCase().includes(category));
+
+            if (filtered.length === 0) {
+                document.getElementById('categoryResult').innerHTML = '<p>No menu items found for this category</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            filtered.forEach(item => {
+                html += `<li>${item.id} - ${item.name} - ${item.category} - ${item.price}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('categoryResult').innerHTML = html;
+        }
+
+        function showRevenueSummary() {
+            const deliveredRevenue = orders
+                .filter(order => order.status === 'Delivered')
+                .reduce((sum, order) => sum + order.totalAmount, 0);
+            document.getElementById('revenueSummary').innerHTML = `<p>Revenue from Delivered Orders: ${deliveredRevenue.toFixed(2)}</p>`;
         }
     </script>
 </body>

@@ -27,6 +27,11 @@
         <button type="submit">Add Student</button>
     </form>
 
+    <h2>Update Department</h2>
+    <input type="text" id="updateStudentId" placeholder="Student ID">
+    <input type="text" id="updateStudentDept" placeholder="New Department">
+    <button onclick="updateDepartment()">Update Department</button>
+
     <h2>Student List</h2>
     <table id="studentTable" border="1">
         <tr>
@@ -39,25 +44,51 @@
     </table>
 
     <h2>Search Student</h2>
-    <input type="text" id="searchInput" placeholder="Enter Student ID">
+    <input type="text" id="searchInput" placeholder="Enter Student ID or Name">
     <button onclick="searchStudent()">Search</button>
     <div id="searchResult"></div>
 
+    <h2>Department Summary</h2>
+    <button onclick="showDepartmentSummary()">Show Summary</button>
+    <div id="deptSummary"></div>
+
+    <div id="message"></div>
+
     <script>
         let students = [];
+
+        function setMessage(text, isError) {
+            const color = isError ? 'red' : 'green';
+            document.getElementById('message').innerHTML = `<p style="color:${color}">${text}</p>`;
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
 
         document.getElementById('studentForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const student = {
-                id: document.getElementById('studentId').value,
-                name: document.getElementById('studentName').value,
-                email: document.getElementById('studentEmail').value,
-                dept: document.getElementById('studentDept').value
+                id: document.getElementById('studentId').value.trim(),
+                name: document.getElementById('studentName').value.trim(),
+                email: document.getElementById('studentEmail').value.trim(),
+                dept: document.getElementById('studentDept').value.trim()
             };
+
+            if (students.some(s => s.id.toLowerCase() === student.id.toLowerCase())) {
+                setMessage('Student ID already exists', true);
+                return;
+            }
+
+            if (!isValidEmail(student.email)) {
+                setMessage('Invalid email format', true);
+                return;
+            }
             
             students.push(student);
             displayStudents();
+            setMessage('Student added successfully', false);
             this.reset();
         });
 
@@ -76,28 +107,71 @@
                 `;
                 table.appendChild(row);
             });
+
+            showDepartmentSummary();
         }
 
         function deleteStudent(index) {
             students.splice(index, 1);
             displayStudents();
+            setMessage('Student deleted', false);
         }
 
         function searchStudent() {
-            const searchId = document.getElementById('searchInput').value;
-            const result = students.find(s => s.id === searchId);
+            const searchKey = document.getElementById('searchInput').value.trim().toLowerCase();
+            const results = students.filter(s =>
+                s.id.toLowerCase().includes(searchKey) || s.name.toLowerCase().includes(searchKey)
+            );
             
-            if (result) {
-                document.getElementById('searchResult').innerHTML = `
-                    <h3>Found Student:</h3>
-                    <p>ID: ${result.id}</p>
-                    <p>Name: ${result.name}</p>
-                    <p>Email: ${result.email}</p>
-                    <p>Department: ${result.dept}</p>
-                `;
+            if (results.length > 0) {
+                let html = '<h3>Found Students:</h3><ul>';
+                results.forEach(result => {
+                    html += `<li>${result.id} - ${result.name} - ${result.email} - ${result.dept}</li>`;
+                });
+                html += '</ul>';
+                document.getElementById('searchResult').innerHTML = html;
             } else {
                 document.getElementById('searchResult').innerHTML = '<p>Student not found</p>';
             }
+        }
+
+        function updateDepartment() {
+            const studentId = document.getElementById('updateStudentId').value.trim();
+            const newDept = document.getElementById('updateStudentDept').value.trim();
+            const student = students.find(s => s.id === studentId);
+
+            if (!student) {
+                setMessage('Student not found', true);
+                return;
+            }
+
+            if (!newDept) {
+                setMessage('Department cannot be empty', true);
+                return;
+            }
+
+            student.dept = newDept;
+            displayStudents();
+            setMessage('Department updated', false);
+        }
+
+        function showDepartmentSummary() {
+            if (students.length === 0) {
+                document.getElementById('deptSummary').innerHTML = '<p>No students available</p>';
+                return;
+            }
+
+            const deptMap = {};
+            students.forEach(student => {
+                deptMap[student.dept] = (deptMap[student.dept] || 0) + 1;
+            });
+
+            let html = '<p>Total Students: ' + students.length + '</p><ul>';
+            for (const dept in deptMap) {
+                html += `<li>${dept}: ${deptMap[dept]}</li>`;
+            }
+            html += '</ul>';
+            document.getElementById('deptSummary').innerHTML = html;
         }
     </script>
 </body>

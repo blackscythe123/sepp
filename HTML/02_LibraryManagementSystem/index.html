@@ -35,6 +35,7 @@
             <th>Author</th>
             <th>ISBN</th>
             <th>Status</th>
+            <th>Due Date</th>
             <th>Action</th>
         </tr>
     </table>
@@ -48,75 +49,161 @@
     <input type="text" id="returnBookId" placeholder="Enter Book ID">
     <button onclick="returnBook()">Return Book</button>
 
+    <h2>Search Book</h2>
+    <input type="text" id="searchBookInput" placeholder="Book ID, Title, or Author">
+    <button onclick="searchBook()">Search</button>
+    <div id="searchResult"></div>
+
+    <h2>Inventory Summary</h2>
+    <button onclick="showBookSummary()">Show Summary</button>
+    <div id="summary"></div>
+
     <div id="message"></div>
 
     <script>
         let books = [];
 
+        function setMessage(text, isError) {
+            const color = isError ? 'red' : 'green';
+            document.getElementById('message').innerHTML = `<p style="color:${color}">${text}</p>`;
+        }
+
+        function isValidIsbn(isbn) {
+            return /^\d{10}(\d{3})?$/.test(isbn);
+        }
+
         document.getElementById('bookForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const book = {
-                id: document.getElementById('bookId').value,
-                title: document.getElementById('bookTitle').value,
-                author: document.getElementById('bookAuthor').value,
-                isbn: document.getElementById('bookIsbn').value,
-                status: 'Available'
+                id: document.getElementById('bookId').value.trim(),
+                title: document.getElementById('bookTitle').value.trim(),
+                author: document.getElementById('bookAuthor').value.trim(),
+                isbn: document.getElementById('bookIsbn').value.trim(),
+                status: 'Available',
+                issuedTo: '',
+                dueDate: ''
             };
+
+            if (books.some(b => b.id.toLowerCase() === book.id.toLowerCase())) {
+                setMessage('Book ID already exists', true);
+                return;
+            }
+
+            if (!isValidIsbn(book.isbn)) {
+                setMessage('ISBN must be 10 or 13 digits', true);
+                return;
+            }
             
             books.push(book);
             displayBooks();
+            setMessage('Book added successfully', false);
             this.reset();
         });
 
         function displayBooks() {
             const table = document.getElementById('bookTable');
-            table.innerHTML = '<tr><th>Book ID</th><th>Title</th><th>Author</th><th>ISBN</th><th>Status</th><th>Action</th></tr>';
+            table.innerHTML = '<tr><th>Book ID</th><th>Title</th><th>Author</th><th>ISBN</th><th>Status</th><th>Due Date</th><th>Action</th></tr>';
             
             books.forEach((book, index) => {
+                const statusText = book.status === 'Issued' ? 'Issued to ' + book.issuedTo : 'Available';
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${book.id}</td>
                     <td>${book.title}</td>
                     <td>${book.author}</td>
                     <td>${book.isbn}</td>
-                    <td>${book.status}</td>
+                    <td>${statusText}</td>
+                    <td>${book.dueDate || '-'}</td>
                     <td><button onclick="deleteBook(${index})">Delete</button></td>
                 `;
                 table.appendChild(row);
             });
+
+            showBookSummary();
         }
 
         function deleteBook(index) {
             books.splice(index, 1);
             displayBooks();
+            setMessage('Book deleted', false);
         }
 
         function issueBook() {
-            const bookId = document.getElementById('issueBookId').value;
-            const memberId = document.getElementById('issueMemberId').value;
+            const bookId = document.getElementById('issueBookId').value.trim();
+            const memberId = document.getElementById('issueMemberId').value.trim();
             const book = books.find(b => b.id === bookId);
             
+            if (!memberId) {
+                setMessage('Member ID is required', true);
+                return;
+            }
+
             if (book && book.status === 'Available') {
-                book.status = 'Issued to ' + memberId;
+                const due = new Date();
+                due.setDate(due.getDate() + 7);
+
+                book.status = 'Issued';
+                book.issuedTo = memberId;
+                book.dueDate = due.toISOString().split('T')[0];
                 displayBooks();
-                document.getElementById('message').innerHTML = '<p>Book issued successfully</p>';
+                setMessage('Book issued successfully', false);
             } else {
-                document.getElementById('message').innerHTML = '<p>Book not available</p>';
+                setMessage('Book not available', true);
             }
         }
 
         function returnBook() {
-            const bookId = document.getElementById('returnBookId').value;
+            const bookId = document.getElementById('returnBookId').value.trim();
             const book = books.find(b => b.id === bookId);
             
-            if (book) {
+            if (book && book.status === 'Issued') {
+                let fine = 0;
+                if (book.dueDate) {
+                    const dueDate = new Date(book.dueDate);
+                    const today = new Date();
+                    const diff = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
+                    if (diff > 0) fine = diff * 5;
+                }
+
                 book.status = 'Available';
+                book.issuedTo = '';
+                book.dueDate = '';
                 displayBooks();
-                document.getElementById('message').innerHTML = '<p>Book returned successfully</p>';
+                setMessage('Book returned. Fine: Rs. ' + fine, false);
             } else {
-                document.getElementById('message').innerHTML = '<p>Book not found</p>';
+                setMessage('Book not found or not issued', true);
             }
+        }
+
+        function searchBook() {
+            const key = document.getElementById('searchBookInput').value.trim().toLowerCase();
+            const filtered = books.filter(book =>
+                book.id.toLowerCase().includes(key) ||
+                book.title.toLowerCase().includes(key) ||
+                book.author.toLowerCase().includes(key)
+            );
+
+            if (filtered.length === 0) {
+                document.getElementById('searchResult').innerHTML = '<p>No matching books</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            filtered.forEach(book => {
+                const statusText = book.status === 'Issued' ? 'Issued to ' + book.issuedTo : 'Available';
+                html += `<li>${book.id} - ${book.title} - ${book.author} - ${statusText}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('searchResult').innerHTML = html;
+        }
+
+        function showBookSummary() {
+            const total = books.length;
+            const issued = books.filter(book => book.status === 'Issued').length;
+            const available = total - issued;
+            document.getElementById('summary').innerHTML =
+                `<p>Total: ${total} | Available: ${available} | Issued: ${issued}</p>`;
         }
     </script>
 </body>

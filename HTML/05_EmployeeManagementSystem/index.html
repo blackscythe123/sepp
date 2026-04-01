@@ -28,6 +28,12 @@
         <button type="submit">Add Employee</button>
     </form>
 
+    <h2>Update Employee</h2>
+    <input type="text" id="updateEmpId" placeholder="Employee ID">
+    <input type="text" id="updateEmpPosition" placeholder="New Position">
+    <input type="number" id="updateEmpSalary" placeholder="New Salary">
+    <button onclick="updateEmployee()">Update Employee</button>
+
     <h2>Employee Directory</h2>
     <table id="employeeTable" border="1">
         <tr>
@@ -49,22 +55,44 @@
     <button onclick="deptCount()">Show Count</button>
     <div id="deptCountResult"></div>
 
+    <h2>Payroll by Department</h2>
+    <button onclick="salarySummary()">Show Payroll Summary</button>
+    <div id="salarySummaryResult"></div>
+
+    <div id="message"></div>
+
     <script>
         let employees = [];
+
+        function setMessage(text, isError) {
+            const color = isError ? 'red' : 'green';
+            document.getElementById('message').innerHTML = `<p style="color:${color}">${text}</p>`;
+        }
 
         document.getElementById('employeeForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const employee = {
-                id: document.getElementById('empId').value,
-                name: document.getElementById('empName').value,
-                dept: document.getElementById('empDept').value,
-                position: document.getElementById('empPosition').value,
+                id: document.getElementById('empId').value.trim(),
+                name: document.getElementById('empName').value.trim(),
+                dept: document.getElementById('empDept').value.trim(),
+                position: document.getElementById('empPosition').value.trim(),
                 salary: parseFloat(document.getElementById('empSalary').value)
             };
+
+            if (employees.some(e => e.id.toLowerCase() === employee.id.toLowerCase())) {
+                setMessage('Employee ID already exists', true);
+                return;
+            }
+
+            if (isNaN(employee.salary) || employee.salary <= 0) {
+                setMessage('Salary must be greater than 0', true);
+                return;
+            }
             
             employees.push(employee);
             displayEmployees();
+            setMessage('Employee added successfully', false);
             this.reset();
         });
 
@@ -84,11 +112,15 @@
                 `;
                 table.appendChild(row);
             });
+
+            deptCount();
+            salarySummary();
         }
 
         function deleteEmployee(index) {
             employees.splice(index, 1);
             displayEmployees();
+            setMessage('Employee deleted', false);
         }
 
         function filterByDept() {
@@ -119,6 +151,38 @@
             }
             result += '</ul>';
             document.getElementById('deptCountResult').innerHTML = result;
+        }
+
+        function updateEmployee() {
+            const id = document.getElementById('updateEmpId').value.trim();
+            const position = document.getElementById('updateEmpPosition').value.trim();
+            const salary = parseFloat(document.getElementById('updateEmpSalary').value);
+            const employee = employees.find(e => e.id === id);
+
+            if (!employee) {
+                setMessage('Employee not found', true);
+                return;
+            }
+
+            if (position) employee.position = position;
+            if (!isNaN(salary) && salary > 0) employee.salary = salary;
+
+            displayEmployees();
+            setMessage('Employee updated', false);
+        }
+
+        function salarySummary() {
+            const summary = {};
+            employees.forEach(emp => {
+                summary[emp.dept] = (summary[emp.dept] || 0) + emp.salary;
+            });
+
+            let result = '<h3>Payroll by Department:</h3><ul>';
+            for (const dept in summary) {
+                result += `<li>${dept}: ${summary[dept].toFixed(2)}</li>`;
+            }
+            result += '</ul>';
+            document.getElementById('salarySummaryResult').innerHTML = result;
         }
     </script>
 </body>
