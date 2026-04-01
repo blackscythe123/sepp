@@ -2,9 +2,21 @@
 <html>
 <head>
     <title>Real Estate Marketplace</title>
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 <body>
     <h1>Real Estate Marketplace</h1>
+    <p><a href="welcome.html">Welcome Page</a> <button onclick="logout()">Logout</button></p>
     <p>Manage your property listings below.</p>
 
     <hr>
