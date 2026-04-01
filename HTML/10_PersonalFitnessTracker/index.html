@@ -37,6 +37,11 @@
     <div id="bmiResult"></div>
 
     <hr>
+    <h2>Workout Summary</h2>
+    <button onclick="showWorkoutSummary()">Show Workout Summary</button>
+    <div id="workoutSummary"></div>
+
+    <hr>
     <h2>Workout History</h2>
     <table border="1" id="workoutTable">
         <thead>
@@ -134,6 +139,20 @@
             } else {
                 resultDiv.innerHTML = '<p style="color: red;">Please enter valid weight and height!</p>';
             }
+        }
+
+        function showWorkoutSummary() {
+            if (workouts.length === 0) {
+                document.getElementById('workoutSummary').innerHTML = '<p>No workouts logged yet.</p>';
+                return;
+            }
+
+            const totalDuration = workouts.reduce((sum, w) => sum + parseFloat(w.duration), 0);
+            const totalCalories = workouts.reduce((sum, w) => sum + parseFloat(w.calories), 0);
+            const avgCalories = totalCalories / workouts.length;
+
+            document.getElementById('workoutSummary').innerHTML =
+                `<p>Total Workouts: ${workouts.length} | Total Duration: ${totalDuration} mins | Total Calories: ${totalCalories} | Avg Calories/Workout: ${avgCalories.toFixed(2)}</p>`;
         }
 
         // Utility: Logging

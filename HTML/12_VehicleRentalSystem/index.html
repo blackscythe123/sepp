@@ -37,6 +37,11 @@
     <div id="rentalResult"></div>
 
     <hr>
+    <h2>Fleet Utilization</h2>
+    <button onclick="showFleetUtilization()">Show Utilization</button>
+    <div id="utilizationResult"></div>
+
+    <hr>
     <h2>Fleet Status</h2>
     <table border="1" id="fleetTable">
         <thead>
@@ -147,6 +152,16 @@
             } else {
                 resultDiv.innerHTML = '<p style="color: red;">Error: Invalid Vehicle ID or Days!</p>';
             }
+        }
+
+        function showFleetUtilization() {
+            const total = fleet.length;
+            const rented = fleet.filter(v => v.status === 'Rented').length;
+            const available = total - rented;
+            const utilization = total === 0 ? 0 : (rented / total) * 100;
+
+            document.getElementById('utilizationResult').innerHTML =
+                `<p>Total: ${total} | Rented: ${rented} | Available: ${available} | Utilization: ${utilization.toFixed(2)}%</p>`;
         }
 
         // Delete Logic

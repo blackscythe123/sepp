@@ -63,6 +63,11 @@
     <button onclick="highestEarnerByDept()">Show Highest Earners</button>
     <div id="highestEarnerResult"></div>
 
+    <h2>Department Team Status</h2>
+    <input type="text" id="teamDept" placeholder="Department">
+    <button onclick="showDepartmentTeamStatus()">Show Team Status</button>
+    <div id="teamStatusResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -203,6 +208,23 @@
             }
             result += '</ul>';
             document.getElementById('highestEarnerResult').innerHTML = result;
+        }
+
+        function showDepartmentTeamStatus() {
+            const dept = document.getElementById('teamDept').value.trim().toLowerCase();
+            const filtered = employees.filter(emp => emp.dept.toLowerCase().includes(dept));
+
+            if (filtered.length === 0) {
+                document.getElementById('teamStatusResult').innerHTML = '<p>No team members found</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            filtered.forEach(emp => {
+                html += `<li>${emp.name} - ${emp.position} - Salary: ${emp.salary}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('teamStatusResult').innerHTML = html;
         }
     </script>
 </body>

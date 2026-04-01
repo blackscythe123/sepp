@@ -56,6 +56,11 @@
     <button onclick="showDepartmentSummary()">Show Summary</button>
     <div id="deptSummary"></div>
 
+    <h2>Student Marks Query</h2>
+    <input type="text" id="marksQueryId" placeholder="Enter Student ID">
+    <button onclick="showMarksQuery()">Show Marks</button>
+    <div id="marksQueryResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -190,6 +195,19 @@
             }
             html += '</ul>';
             document.getElementById('deptSummary').innerHTML = html;
+        }
+
+        function showMarksQuery() {
+            const studentId = document.getElementById('marksQueryId').value.trim();
+            const student = students.find(s => s.id === studentId);
+
+            if (!student) {
+                document.getElementById('marksQueryResult').innerHTML = '<p>Student not found</p>';
+                return;
+            }
+
+            document.getElementById('marksQueryResult').innerHTML =
+                `<p>${student.name} | Mark1: ${student.mark1} | Mark2: ${student.mark2} | Mark3: ${student.mark3} | CGPA: ${student.cgpa}</p>`;
         }
     </script>
 </body>

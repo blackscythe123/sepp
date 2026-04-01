@@ -80,6 +80,10 @@
     <button onclick="checkInParticipant()">Check In</button>
     <div id="attendanceSummary"></div>
 
+    <h2>Event Occupancy Status</h2>
+    <button onclick="showEventOccupancy()">Show Occupancy</button>
+    <div id="occupancyResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -303,6 +307,21 @@
             }
             html += '</ul>';
             document.getElementById('attendanceSummary').innerHTML = html;
+        }
+
+        function showEventOccupancy() {
+            if (events.length === 0) {
+                document.getElementById('occupancyResult').innerHTML = '<p>No events created</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            events.forEach(event => {
+                const remaining = event.capacity - event.registrations;
+                html += `<li>${event.id} - ${event.name}: ${event.registrations}/${event.capacity} booked, ${remaining} seats left</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('occupancyResult').innerHTML = html;
         }
     </script>
 </body>

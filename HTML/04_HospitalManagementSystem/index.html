@@ -67,10 +67,18 @@
     <div id="criticalResult"></div>
     <div id="statusSummary"></div>
 
+    <h2>Patient Payment Tracker</h2>
+    <input type="text" id="paymentPatientId" placeholder="Patient ID">
+    <input type="number" id="paymentAmount" placeholder="Amount Paid">
+    <button onclick="recordPayment()">Record Payment</button>
+    <button onclick="showPaymentSummary()">Show Payment Summary</button>
+    <div id="paymentSummary"></div>
+
     <div id="message"></div>
 
     <script>
         let patients = [];
+        let payments = [];
 
         function setMessage(text, isError) {
             const color = isError ? 'red' : 'green';
@@ -211,6 +219,35 @@
 
             document.getElementById('statusSummary').innerHTML =
                 `<p>Admitted: ${summary['Admitted']} | Under Treatment: ${summary['Under Treatment']} | Discharged: ${summary['Discharged']} | Critical: ${summary['Critical']}</p>`;
+        }
+
+        function recordPayment() {
+            const patientId = document.getElementById('paymentPatientId').value.trim();
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            payments.push({ patientId: patientId, amount: amount });
+            showPaymentSummary();
+            setMessage('Payment recorded', false);
+        }
+
+        function showPaymentSummary() {
+            if (payments.length === 0) {
+                document.getElementById('paymentSummary').innerHTML = '<p>No payments recorded</p>';
+                return;
+            }
+
+            const paidMap = {};
+            payments.forEach(p => {
+                paidMap[p.patientId] = (paidMap[p.patientId] || 0) + p.amount;
+            });
+
+            let html = '<ul>';
+            for (const patientId in paidMap) {
+                const patient = patients.find(p => p.id === patientId);
+                const name = patient ? patient.name : 'Unknown Patient';
+                html += `<li>${patientId} - ${name} - Total Repaid: ${paidMap[patientId].toFixed(2)}</li>`;
+            }
+            html += '</ul>';
+            document.getElementById('paymentSummary').innerHTML = html;
         }
     </script>
 </body>

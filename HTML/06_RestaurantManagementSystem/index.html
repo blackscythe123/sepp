@@ -65,6 +65,11 @@
     <button onclick="showRevenueSummary()">Show Revenue</button>
     <div id="revenueSummary"></div>
 
+    <h2>Generate Bill</h2>
+    <input type="text" id="billOrderId" placeholder="Order ID">
+    <button onclick="generateBill()">Generate Bill</button>
+    <div id="billResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -225,6 +230,27 @@
                 .filter(order => order.status === 'Delivered')
                 .reduce((sum, order) => sum + order.totalAmount, 0);
             document.getElementById('revenueSummary').innerHTML = `<p>Revenue from Delivered Orders: ${deliveredRevenue.toFixed(2)}</p>`;
+        }
+
+        function generateBill() {
+            const orderId = document.getElementById('billOrderId').value.trim();
+            const order = orders.find(o => o.orderId === orderId);
+
+            if (!order) {
+                document.getElementById('billResult').innerHTML = '<p>Order not found</p>';
+                return;
+            }
+
+            const item = menuItems.find(m => m.id === order.itemId);
+            const itemName = item ? item.name : order.itemId;
+
+            document.getElementById('billResult').innerHTML = `
+                <p>Order: ${order.orderId}</p>
+                <p>Item: ${itemName}</p>
+                <p>Quantity: ${order.quantity}</p>
+                <p>Status: ${order.status}</p>
+                <p>Total Bill: ${order.totalAmount.toFixed(2)}</p>
+            `;
         }
     </script>
 </body>

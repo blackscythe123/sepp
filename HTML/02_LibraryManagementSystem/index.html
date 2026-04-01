@@ -62,6 +62,10 @@
     <button onclick="showOverdueBooks()">Show Overdue</button>
     <div id="overdueResult"></div>
 
+    <h2>Fine and Shelf Status</h2>
+    <button onclick="showFineAndShelfStatus()">Show Fine and Slot Report</button>
+    <div id="fineShelfResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -225,6 +229,35 @@
             });
             html += '</ul>';
             document.getElementById('overdueResult').innerHTML = html;
+        }
+
+        function showFineAndShelfStatus() {
+            const today = new Date();
+            const issued = books.filter(book => book.status === 'Issued');
+            const inSlot = books.filter(book => book.status === 'Available').length;
+            const notInSlot = issued.length;
+
+            let totalFine = 0;
+            issued.forEach(book => {
+                if (book.dueDate) {
+                    const due = new Date(book.dueDate);
+                    const lateDays = Math.floor((today - due) / (1000 * 60 * 60 * 24));
+                    if (lateDays > 0) totalFine += lateDays * 5;
+                }
+            });
+
+            let html = `<p>Total Fine Pending: Rs. ${totalFine}</p>`;
+            html += `<p>Books In Slot: ${inSlot} | Books Not In Slot: ${notInSlot}</p>`;
+
+            if (issued.length > 0) {
+                html += '<ul>';
+                issued.forEach(book => {
+                    html += `<li>${book.title} is with ${book.issuedTo || 'Unknown Member'}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            document.getElementById('fineShelfResult').innerHTML = html;
         }
     </script>
 </body>

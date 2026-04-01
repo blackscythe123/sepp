@@ -35,6 +35,13 @@
     <button onclick="searchJobs()">Search</button>
     <div id="searchResult"></div>
 
+    <hr>
+    <h2>Budget Range Query</h2>
+    <input type="number" id="minBudget" placeholder="Min Budget">
+    <input type="number" id="maxBudget" placeholder="Max Budget">
+    <button onclick="filterByBudget()">Filter by Budget</button>
+    <div id="budgetResult"></div>
+
     <table border="1" id="jobTable">
         <thead>
             <tr>
@@ -137,6 +144,25 @@
                 resultDiv.innerHTML = '<p style="color: red;">No matching jobs found.</p>';
                 logAction(`Searched for: "${query}" (Not Found)`);
             }
+        }
+
+        function filterByBudget() {
+            const min = parseFloat(document.getElementById('minBudget').value);
+            const max = parseFloat(document.getElementById('maxBudget').value);
+            const filtered = jobs.filter(j => parseFloat(j.budget) >= min && parseFloat(j.budget) <= max);
+
+            if (filtered.length === 0) {
+                document.getElementById('budgetResult').innerHTML = '<p>No jobs in this budget range.</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            filtered.forEach(job => {
+                html += `<li>${job.title} - Rs. ${job.budget} - ${job.skills}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('budgetResult').innerHTML = html;
+            logAction(`Budget query between ${min} and ${max}`);
         }
 
         // Utility: Logging

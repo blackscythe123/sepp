@@ -65,6 +65,11 @@
     <button onclick="showWorkloadSummary()">Show Workload</button>
     <div id="workloadSummary"></div>
 
+    <h2>Manager Project Status</h2>
+    <input type="text" id="managerQuery" placeholder="Manager Name">
+    <button onclick="showManagerProjectStatus()">Show Manager Projects</button>
+    <div id="managerProjectResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -228,6 +233,23 @@
             html += '</ul>';
 
             document.getElementById('workloadSummary').innerHTML = html;
+        }
+
+        function showManagerProjectStatus() {
+            const manager = document.getElementById('managerQuery').value.trim().toLowerCase();
+            const filtered = projects.filter(p => p.manager.toLowerCase().includes(manager));
+
+            if (filtered.length === 0) {
+                document.getElementById('managerProjectResult').innerHTML = '<p>No projects found for this manager</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            filtered.forEach(project => {
+                html += `<li>${project.id} - ${project.name} - Status: ${project.status} - Progress: ${project.progress}%</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('managerProjectResult').innerHTML = html;
         }
     </script>
 </body>

@@ -57,6 +57,11 @@
     <button onclick="showInventorySummary()">Show Summary</button>
     <div id="inventorySummary"></div>
 
+    <h2>Shelf Stock Query</h2>
+    <input type="text" id="shelfQuery" placeholder="Product ID or Name">
+    <button onclick="showShelfStock()">Show Shelf Stock</button>
+    <div id="shelfStockResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -185,6 +190,27 @@
             });
             html += '</ul>';
             document.getElementById('searchProductResult').innerHTML = html;
+        }
+
+        function showShelfStock() {
+            const key = document.getElementById('shelfQuery').value.trim().toLowerCase();
+            const filtered = products.filter(product =>
+                product.id.toLowerCase().includes(key) || product.name.toLowerCase().includes(key)
+            );
+
+            if (filtered.length === 0) {
+                document.getElementById('shelfStockResult').innerHTML = '<p>No shelf stock match</p>';
+                return;
+            }
+
+            let totalUnits = 0;
+            let html = '<ul>';
+            filtered.forEach(product => {
+                totalUnits += product.quantity;
+                html += `<li>${product.id} - ${product.name} - Shelf Units: ${product.quantity}</li>`;
+            });
+            html += `</ul><p>Total Units in Query: ${totalUnits}</p>`;
+            document.getElementById('shelfStockResult').innerHTML = html;
         }
     </script>
 </body>

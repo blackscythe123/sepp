@@ -43,6 +43,13 @@
     <div id="searchResult"></div>
 
     <hr>
+    <h2>Price Range Query</h2>
+    <input type="number" id="minPrice" placeholder="Min Price">
+    <input type="number" id="maxPrice" placeholder="Max Price">
+    <button onclick="filterByPriceRange()">Filter by Price</button>
+    <div id="priceResult"></div>
+
+    <hr>
     <h2>Property Listings</h2>
     <table border="1" id="propertyTable">
         <thead>
@@ -151,6 +158,25 @@
                 resultDiv.innerHTML = '<p style="color: red;">Property not found!</p>';
                 logActivity(`Searched for property ID: ${id} (Not Found)`);
             }
+        }
+
+        function filterByPriceRange() {
+            const min = parseFloat(document.getElementById('minPrice').value);
+            const max = parseFloat(document.getElementById('maxPrice').value);
+            const filtered = properties.filter(p => parseFloat(p.price) >= min && parseFloat(p.price) <= max);
+
+            if (filtered.length === 0) {
+                document.getElementById('priceResult').innerHTML = '<p>No properties in this price range.</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            filtered.forEach(prop => {
+                html += `<li>${prop.id} - ${prop.address} - Rs. ${prop.price}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('priceResult').innerHTML = html;
+            logActivity(`Price query between ${min} and ${max}`);
         }
 
         // Utility: Logging

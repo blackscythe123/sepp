@@ -73,6 +73,11 @@
     </table>
 
     <hr>
+    <h2>Enrollment Summary by Course</h2>
+    <button onclick="showEnrollmentSummary()">Show Summary</button>
+    <div id="enrollmentSummary"></div>
+
+    <hr>
     <h2>Activity Log</h2>
     <ul id="activityLog">
         <!-- Log entries will appear here -->
@@ -191,6 +196,25 @@
                 logAction(`Removed enrollment for: ${en.studentName}`);
                 displayEnrollments();
             }
+        }
+
+        function showEnrollmentSummary() {
+            if (enrollments.length === 0) {
+                document.getElementById('enrollmentSummary').innerHTML = '<p>No enrollments yet.</p>';
+                return;
+            }
+
+            const summary = {};
+            enrollments.forEach(en => {
+                summary[en.courseName] = (summary[en.courseName] || 0) + 1;
+            });
+
+            let html = '<ul>';
+            for (const courseName in summary) {
+                html += `<li>${courseName}: ${summary[courseName]} student(s)</li>`;
+            }
+            html += '</ul>';
+            document.getElementById('enrollmentSummary').innerHTML = html;
         }
 
         // Utility: Logging
