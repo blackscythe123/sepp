@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real Estate Marketplace</title>
+</head>
+<body>
+    <h1>Real Estate Marketplace</h1>
+    <p>Manage your property listings below.</p>
+
+    <hr>
+    <h2>Add New Property</h2>
+    <form id="propertyForm">
+        <input type="text" id="propId" placeholder="Property ID" required>
+        <input type="text" id="propAddress" placeholder="Address" required>
+        <input type="number" id="propPrice" placeholder="Price" required>
+        <select id="propType" required>
+            <option value="">Select Type</option>
+            <option value="Apartment">Apartment</option>
+            <option value="House">House</option>
+            <option value="Condo">Condo</option>
+            <option value="Villa">Villa</option>
+        </select>
+        <button type="submit">Add Property</button>
+    </form>
+    <p id="addMessage"></p>
+
+    <hr>
+    <h2>Search Property</h2>
+    <input type="text" id="searchId" placeholder="Enter Property ID">
+    <button onclick="searchProperty()">Search</button>
+    <div id="searchResult"></div>
+
+    <hr>
+    <h2>Property Listings</h2>
+    <table border="1" id="propertyTable">
+        <thead>
+            <tr>
+                <th>Property ID</th>
+                <th>Address</th>
+                <th>Price (Rs)</th>
+                <th>Type</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+    <p id="listMessage"></p>
+
+    <hr>
+    <h2>Activity Log</h2>
+    <ul id="activityLog">
+        <!-- Log entries will appear here -->
+    </ul>
+
+    <script>
+        // State management
+        let properties = [];
+        let activities = [];
+
+        // Add Property Logic
+        document.getElementById('propertyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('propId').value;
+            const address = document.getElementById('propAddress').value;
+            const price = document.getElementById('propPrice').value;
+            const type = document.getElementById('propType').value;
+
+            // Simple Duplicate ID Check
+            if (properties.some(p => p.id === id)) {
+                showMessage('addMessage', 'Error: Property ID already exists!', 'red');
+                return;
+            }
+
+            const newProperty = { id, address, price, type };
+            properties.push(newProperty);
+            
+            logActivity(`Added property with ID: ${id}`);
+            displayProperties();
+            showMessage('addMessage', 'Property added successfully!', 'green');
+            this.reset();
+        });
+
+        // Display Logic
+        function displayProperties() {
+            const tbody = document.querySelector('#propertyTable tbody');
+            tbody.innerHTML = '';
+
+            properties.forEach((prop, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${prop.id}</td>
+                    <td>${prop.address}</td>
+                    <td>${prop.price}</td>
+                    <td>${prop.type}</td>
+                    <td><button onclick="deleteProperty(${index})">Delete</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (properties.length === 0) {
+                document.getElementById('listMessage').innerText = 'No properties listed.';
+            } else {
+                document.getElementById('listMessage').innerText = '';
+            }
+        }
+
+        // Delete Logic
+        function deleteProperty(index) {
+            const propId = properties[index].id;
+            if (confirm(`Are you sure you want to delete property ${propId}?`)) {
+                properties.splice(index, 1);
+                logActivity(`Deleted property with ID: ${propId}`);
+                displayProperties();
+                alert('Property deleted.');
+            }
+        }
+
+        // Search Logic
+        function searchProperty() {
+            const id = document.getElementById('searchId').value;
+            const property = properties.find(p => p.id === id);
+            const resultDiv = document.getElementById('searchResult');
+
+            if (property) {
+                resultDiv.innerHTML = `
+                    <p><strong>Property Found:</strong></p>
+                    <ul>
+                        <li>ID: ${property.id}</li>
+                        <li>Address: ${property.address}</li>
+                        <li>Price: Rs. ${property.price}</li>
+                        <li>Type: ${property.type}</li>
+                    </ul>
+                `;
+                logActivity(`Searched for property ID: ${id} (Found)`);
+            } else {
+                resultDiv.innerHTML = '<p style="color: red;">Property not found!</p>';
+                logActivity(`Searched for property ID: ${id} (Not Found)`);
+            }
+        }
+
+        // Utility: Logging
+        function logActivity(action) {
+            const now = new Date();
+            const timestamp = now.toLocaleTimeString();
+            const logEntry = `${timestamp} - ${action}`;
+            activities.push(logEntry);
+            
+            const logList = document.getElementById('activityLog');
+            const li = document.createElement('li');
+            li.innerText = logEntry;
+            logList.prepend(li); // Show newest at top
+        }
+
+        // Utility: Messages
+        function showMessage(id, text, color) {
+            const el = document.getElementById(id);
+            el.innerText = text;
+            el.style.color = color;
+            setTimeout(() => { el.innerText = ''; }, 3000);
+        }
+    </script>
+</body>
+</html>
