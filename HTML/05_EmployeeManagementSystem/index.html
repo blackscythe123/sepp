@@ -68,14 +68,28 @@
     <button onclick="showDepartmentTeamStatus()">Show Team Status</button>
     <div id="teamStatusResult"></div>
 
+    <h2>Search Employee</h2>
+    <input type="text" id="empSearchInput" placeholder="Employee ID or Name">
+    <button onclick="searchEmployee()">Search Employee</button>
+    <div id="empSearchResult"></div>
+
+    <h2>Activity Log</h2>
+    <div id="activityLog"></div>
+
     <div id="message"></div>
 
     <script>
         let employees = [];
+        let activityLog = [];
 
         function setMessage(text, isError) {
             const color = isError ? 'red' : 'green';
             document.getElementById('message').innerHTML = `<p style="color:${color}">${text}</p>`;
+        }
+
+        function logActivity(action) {
+            activityLog.unshift(`${new Date().toLocaleString()} - ${action}`);
+            document.getElementById('activityLog').innerHTML = '<ul>' + activityLog.map(item => `<li>${item}</li>`).join('') + '</ul>';
         }
 
         document.getElementById('employeeForm').addEventListener('submit', function(e) {
@@ -127,9 +141,11 @@
         }
 
         function deleteEmployee(index) {
+            const id = employees[index].id;
             employees.splice(index, 1);
             displayEmployees();
             setMessage('Employee deleted', false);
+            logActivity(`Deleted employee ${id}`);
         }
 
         function filterByDept() {
@@ -178,6 +194,7 @@
 
             displayEmployees();
             setMessage('Employee updated', false);
+            logActivity(`Updated employee ${id}`);
         }
 
         function salarySummary() {
@@ -225,6 +242,25 @@
             });
             html += '</ul>';
             document.getElementById('teamStatusResult').innerHTML = html;
+        }
+
+        function searchEmployee() {
+            const key = document.getElementById('empSearchInput').value.trim().toLowerCase();
+            const filtered = employees.filter(emp =>
+                emp.id.toLowerCase().includes(key) || emp.name.toLowerCase().includes(key)
+            );
+
+            if (filtered.length === 0) {
+                document.getElementById('empSearchResult').innerHTML = '<p>No matching employees</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            filtered.forEach(emp => {
+                html += `<li>${emp.id} - ${emp.name} - ${emp.dept} - ${emp.position} - ${emp.salary}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('empSearchResult').innerHTML = html;
         }
     </script>
 </body>

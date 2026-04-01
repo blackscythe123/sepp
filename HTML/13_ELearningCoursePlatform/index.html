@@ -77,6 +77,7 @@
     <hr>
     <h2>Enrollment Summary by Course</h2>
     <button onclick="showEnrollmentSummary()">Show Summary</button>
+    <button onclick="showEnrollmentValidityReport()">Show Validity Report</button>
     <div id="enrollmentSummary"></div>
 
     <hr>
@@ -185,11 +186,15 @@
         // Delete Logic
         function deleteCourse(index) {
             const id = courses[index].id;
-            if (confirm(`Delete course ${id}? (Enrollments won't be deleted)`)) {
+            const courseName = courses[index].name;
+            const linked = enrollments.filter(en => en.courseName === courseName).length;
+            if (confirm(`Delete course ${id}? ${linked} enrollment(s) will also be removed.`)) {
                 courses.splice(index, 1);
+                enrollments = enrollments.filter(en => en.courseName !== courseName);
                 logAction(`Deleted course: ${id}`);
                 displayCourses();
                 populateSelect();
+                displayEnrollments();
             }
         }
 
@@ -222,6 +227,27 @@
                 html += `<li><strong>${courseName}:</strong> ${count} student(s) | <strong>Revenue:</strong> Rs. ${revenue}</li>`;
             }
             html += '</ul>';
+            document.getElementById('enrollmentSummary').innerHTML = html;
+        }
+
+        function showEnrollmentValidityReport() {
+            if (enrollments.length === 0) {
+                document.getElementById('enrollmentSummary').innerHTML = '<p>No enrollments to validate.</p>';
+                return;
+            }
+
+            const validCourseNames = courses.map(c => c.name);
+            const valid = enrollments.filter(en => validCourseNames.includes(en.courseName));
+            const orphan = enrollments.filter(en => !validCourseNames.includes(en.courseName));
+
+            let html = `<p>Valid Enrollments: ${valid.length} | Orphan Enrollments: ${orphan.length}</p>`;
+            if (orphan.length > 0) {
+                html += '<ul>';
+                orphan.forEach(en => {
+                    html += `<li>${en.studentName} -> ${en.courseName}</li>`;
+                });
+                html += '</ul>';
+            }
             document.getElementById('enrollmentSummary').innerHTML = html;
         }
 

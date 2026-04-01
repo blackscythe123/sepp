@@ -31,6 +31,7 @@
 
     <hr>
     <h2>Process Rental</h2>
+    <input type="text" id="customerName" placeholder="Customer Name">
     <input type="text" id="rentId" placeholder="Vehicle ID to Rent">
     <input type="number" id="rentDays" placeholder="Number of Days">
     <button onclick="processRental()">Rent Vehicle</button>
@@ -65,10 +66,26 @@
         <!-- Log entries will appear here -->
     </ul>
 
+    <hr>
+    <h2>Rental History Ledger</h2>
+    <table border="1" id="rentalHistoryTable">
+        <thead>
+            <tr>
+                <th>Vehicle ID</th>
+                <th>Customer Name</th>
+                <th>Days</th>
+                <th>Total Cost</th>
+                <th>Rental Date</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
     <script>
         // State management
         let fleet = [];
         let logs = [];
+        let rentalHistory = [];
 
         // Fleet Management Logic
         document.getElementById('vehicleForm').addEventListener('submit', function(e) {
@@ -130,6 +147,7 @@
 
         // Rental Processing Logic
         function processRental() {
+            const customerName = document.getElementById('customerName').value;
             const id = document.getElementById('rentId').value;
             const days = parseInt(document.getElementById('rentDays').value);
             const veh = fleet.find(v => v.id === id);
@@ -143,12 +161,21 @@
                 const total = veh.rate * days;
                 resultDiv.innerHTML = `
                     <p style="color: blue;"><strong>Rental Confirmed!</strong></p>
+                    <p>Customer: ${customerName}</p>
                     <p>Vehicle: ${veh.model} (${veh.id})</p>
                     <p>Total Cost: Rs. ${total}</p>
                 `;
                 veh.status = 'Rented';
+                rentalHistory.push({
+                    vehicleId: veh.id,
+                    customerName: customerName,
+                    days: days,
+                    totalCost: total,
+                    rentalDate: new Date().toLocaleString()
+                });
                 logAction(`Rental processed for ${id} for ${days} days. Total: Rs. ${total}`);
                 displayFleet();
+                displayRentalHistory();
             } else {
                 resultDiv.innerHTML = '<p style="color: red;">Error: Invalid Vehicle ID or Days!</p>';
             }
@@ -172,6 +199,23 @@
                 logAction(`Deleted vehicle: ${id}`);
                 displayFleet();
             }
+        }
+
+        function displayRentalHistory() {
+            const tbody = document.querySelector('#rentalHistoryTable tbody');
+            tbody.innerHTML = '';
+
+            rentalHistory.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.vehicleId}</td>
+                    <td>${item.customerName}</td>
+                    <td>${item.days}</td>
+                    <td>${item.totalCost}</td>
+                    <td>${item.rentalDate}</td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
         // Utility: Logging

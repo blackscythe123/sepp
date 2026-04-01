@@ -62,10 +62,15 @@
     <button onclick="showShelfStock()">Show Shelf Stock</button>
     <div id="shelfStockResult"></div>
 
+    <h2>Stock Movement History</h2>
+    <button onclick="showMovementLog()">Show Movement Log</button>
+    <div id="movementLogResult"></div>
+
     <div id="message"></div>
 
     <script>
         let products = [];
+        let movementLog = [];
 
         function setMessage(text, isError) {
             const color = isError ? 'red' : 'green';
@@ -141,7 +146,9 @@
                     return;
                 }
 
+                const oldQty = product.quantity;
                 product.quantity += quantityChange;
+                movementLog.unshift(`${new Date().toLocaleString()} - ${product.id} - ${quantityChange > 0 ? 'IN' : 'OUT'} ${Math.abs(quantityChange)} (${oldQty} -> ${product.quantity})`);
                 displayProducts();
                 setMessage('Stock updated successfully', false);
             } else {
@@ -211,6 +218,14 @@
             });
             html += `</ul><p>Total Units in Query: ${totalUnits}</p>`;
             document.getElementById('shelfStockResult').innerHTML = html;
+        }
+
+        function showMovementLog() {
+            if (movementLog.length === 0) {
+                document.getElementById('movementLogResult').innerHTML = '<p>No stock movements yet</p>';
+                return;
+            }
+            document.getElementById('movementLogResult').innerHTML = '<ul>' + movementLog.map(item => `<li>${item}</li>`).join('') + '</ul>';
         }
     </script>
 </body>

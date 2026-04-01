@@ -32,6 +32,8 @@
 
     <hr>
     <h2>Freelancer Section: Browse Jobs</h2>
+    <input type="text" id="freelancerName" placeholder="Freelancer Name">
+    <input type="email" id="freelancerEmail" placeholder="Freelancer Email">
     <input type="text" id="searchQuery" placeholder="Search by Title or Skill">
     <button onclick="searchJobs()">Search</button>
     <div id="searchResult"></div>
@@ -64,10 +66,27 @@
         <!-- Log entries will appear here -->
     </ul>
 
+    <hr>
+    <h2>Freelancer Applications</h2>
+    <table border="1" id="applicationTable">
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Freelancer Name</th>
+                <th>Freelancer Email</th>
+                <th>Applied Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
     <script>
         // State management
         let jobs = [];
         let logs = [];
+        let applications = [];
 
         // Job Posting Logic
         document.getElementById('jobForm').addEventListener('submit', function(e) {
@@ -117,8 +136,20 @@
         // Apply Logic
         function applyForJob(index) {
             const jobTitle = jobs[index].title;
-            alert(`Application sent for: ${jobTitle}`);
-            logAction(`Applied for job: ${jobTitle}`);
+            const freelancerName = document.getElementById('freelancerName').value;
+            const freelancerEmail = document.getElementById('freelancerEmail').value;
+
+            applications.push({
+                jobIndex: index,
+                jobTitle: jobTitle,
+                freelancerName: freelancerName,
+                freelancerEmail: freelancerEmail,
+                appliedDate: new Date().toLocaleString(),
+                status: 'Pending'
+            });
+
+            displayApplications();
+            logAction(`Applied for job: ${jobTitle} by ${freelancerName}`);
         }
 
         // Delete Logic
@@ -165,6 +196,33 @@
             html += '</ul>';
             document.getElementById('budgetResult').innerHTML = html;
             logAction(`Budget query for floor: ${min}`);
+        }
+
+        function displayApplications() {
+            const tbody = document.querySelector('#applicationTable tbody');
+            tbody.innerHTML = '';
+
+            applications.forEach((app, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${app.jobTitle}</td>
+                    <td>${app.freelancerName}</td>
+                    <td>${app.freelancerEmail}</td>
+                    <td>${app.appliedDate}</td>
+                    <td>${app.status}</td>
+                    <td>
+                        <button onclick="updateApplicationStatus(${index}, 'Accepted')">Accept</button>
+                        <button onclick="updateApplicationStatus(${index}, 'Rejected')">Reject</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateApplicationStatus(index, status) {
+            applications[index].status = status;
+            displayApplications();
+            logAction(`Application ${status}: ${applications[index].jobTitle} - ${applications[index].freelancerName}`);
         }
 
         // Utility: Logging

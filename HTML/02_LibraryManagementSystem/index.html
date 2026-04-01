@@ -35,6 +35,7 @@
             <th>Author</th>
             <th>ISBN</th>
             <th>Status</th>
+            <th>Issue Date</th>
             <th>Due Date</th>
             <th>Action</th>
         </tr>
@@ -66,10 +67,15 @@
     <button onclick="showFineAndShelfStatus()">Show Fine and Slot Report</button>
     <div id="fineShelfResult"></div>
 
+    <h2>Issue/Return History</h2>
+    <button onclick="showTransactionLog()">Show History</button>
+    <div id="transactionLogResult"></div>
+
     <div id="message"></div>
 
     <script>
         let books = [];
+        let transactionLog = [];
 
         function setMessage(text, isError) {
             const color = isError ? 'red' : 'green';
@@ -90,6 +96,7 @@
                 isbn: document.getElementById('bookIsbn').value.trim(),
                 status: 'Available',
                 issuedTo: '',
+                issueDate: '',
                 dueDate: ''
             };
 
@@ -111,7 +118,7 @@
 
         function displayBooks() {
             const table = document.getElementById('bookTable');
-            table.innerHTML = '<tr><th>Book ID</th><th>Title</th><th>Author</th><th>ISBN</th><th>Status</th><th>Due Date</th><th>Action</th></tr>';
+            table.innerHTML = '<tr><th>Book ID</th><th>Title</th><th>Author</th><th>ISBN</th><th>Status</th><th>Issue Date</th><th>Due Date</th><th>Action</th></tr>';
             
             books.forEach((book, index) => {
                 const statusText = book.status === 'Issued' ? 'Issued to ' + book.issuedTo : 'Available';
@@ -122,6 +129,7 @@
                     <td>${book.author}</td>
                     <td>${book.isbn}</td>
                     <td>${statusText}</td>
+                    <td>${book.issueDate || '-'}</td>
                     <td>${book.dueDate || '-'}</td>
                     <td><button onclick="deleteBook(${index})">Delete</button></td>
                 `;
@@ -148,12 +156,15 @@
             }
 
             if (book && book.status === 'Available') {
+                if (!confirm('Confirm issuing this book?')) return;
                 const due = new Date();
                 due.setDate(due.getDate() + 7);
 
                 book.status = 'Issued';
                 book.issuedTo = memberId;
+                book.issueDate = new Date().toISOString().split('T')[0];
                 book.dueDate = due.toISOString().split('T')[0];
+                transactionLog.unshift(`${new Date().toLocaleString()} - ISSUE - ${book.id} to ${memberId}`);
                 displayBooks();
                 setMessage('Book issued successfully', false);
             } else {
@@ -166,6 +177,7 @@
             const book = books.find(b => b.id === bookId);
             
             if (book && book.status === 'Issued') {
+                if (!confirm('Confirm returning this book?')) return;
                 let fine = 0;
                 if (book.dueDate) {
                     const dueDate = new Date(book.dueDate);
@@ -176,7 +188,9 @@
 
                 book.status = 'Available';
                 book.issuedTo = '';
+                book.issueDate = '';
                 book.dueDate = '';
+                transactionLog.unshift(`${new Date().toLocaleString()} - RETURN - ${book.id} Fine Rs.${fine}`);
                 displayBooks();
                 setMessage('Book returned. Fine: Rs. ' + fine, false);
             } else {
@@ -258,6 +272,14 @@
             }
 
             document.getElementById('fineShelfResult').innerHTML = html;
+        }
+
+        function showTransactionLog() {
+            if (transactionLog.length === 0) {
+                document.getElementById('transactionLogResult').innerHTML = '<p>No transactions yet</p>';
+                return;
+            }
+            document.getElementById('transactionLogResult').innerHTML = '<ul>' + transactionLog.map(item => `<li>${item}</li>`).join('') + '</ul>';
         }
     </script>
 </body>

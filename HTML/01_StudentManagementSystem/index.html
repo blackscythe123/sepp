@@ -61,15 +61,35 @@
     <button onclick="showMarksQuery()">Show Marks</button>
     <div id="marksQueryResult"></div>
 
+    <h2>Activity Log</h2>
+    <div id="activityLog"></div>
+
     <div id="message"></div>
 
     <script>
         let students = [];
+        let activityLog = [];
+        let inactivityTimer;
 
         function setMessage(text, isError) {
             const color = isError ? 'red' : 'green';
             document.getElementById('message').innerHTML = `<p style="color:${color}">${text}</p>`;
         }
+
+        function logActivity(action) {
+            activityLog.unshift(`${new Date().toLocaleString()} - ${action}`);
+            document.getElementById('activityLog').innerHTML = '<ul>' + activityLog.map(a => `<li>${a}</li>`).join('') + '</ul>';
+        }
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(logout, 15 * 60 * 1000);
+        }
+
+        ['click', 'keydown', 'mousemove', 'scroll'].forEach(evt => {
+            document.addEventListener(evt, resetInactivityTimer);
+        });
+        resetInactivityTimer();
 
         function isValidEmail(email) {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -111,6 +131,7 @@
             students.push(student);
             displayStudents();
             setMessage('Student added successfully', false);
+            logActivity(`Added student ${student.id}`);
             this.reset();
         });
 
@@ -135,9 +156,12 @@
         }
 
         function deleteStudent(index) {
+            if (!confirm('Delete this student record?')) return;
+            const id = students[index].id;
             students.splice(index, 1);
             displayStudents();
             setMessage('Student deleted', false);
+            logActivity(`Deleted student ${id}`);
         }
 
         function searchStudent() {
@@ -153,8 +177,10 @@
                 });
                 html += '</ul>';
                 document.getElementById('searchResult').innerHTML = html;
+                logActivity(`Searched student: ${searchKey}`);
             } else {
                 document.getElementById('searchResult').innerHTML = '<p>Student not found</p>';
+                logActivity(`Searched student not found: ${searchKey}`);
             }
         }
 
@@ -176,6 +202,7 @@
             student.dept = newDept;
             displayStudents();
             setMessage('Department updated', false);
+            logActivity(`Updated department for ${student.id} to ${newDept}`);
         }
 
         function showDepartmentSummary() {

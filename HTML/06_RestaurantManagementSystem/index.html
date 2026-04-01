@@ -70,6 +70,18 @@
     <button onclick="generateBill()">Generate Bill</button>
     <div id="billResult"></div>
 
+    <h2>Search Order</h2>
+    <input type="text" id="orderSearchId" placeholder="Order ID">
+    <select id="orderStatusFilter">
+        <option value="All">All</option>
+        <option value="Pending">Pending</option>
+        <option value="Preparing">Preparing</option>
+        <option value="Ready">Ready</option>
+        <option value="Delivered">Delivered</option>
+    </select>
+    <button onclick="searchOrder()">Search Order</button>
+    <div id="orderSearchResult"></div>
+
     <div id="message"></div>
 
     <script>
@@ -251,6 +263,29 @@
                 <p>Status: ${order.status}</p>
                 <p>Total Bill: ${order.totalAmount.toFixed(2)}</p>
             `;
+        }
+
+        function searchOrder() {
+            const orderId = document.getElementById('orderSearchId').value.trim().toLowerCase();
+            const status = document.getElementById('orderStatusFilter').value;
+
+            const filtered = orders.filter(order => {
+                const idMatch = order.orderId.toLowerCase().includes(orderId);
+                const statusMatch = status === 'All' || order.status === status;
+                return idMatch && statusMatch;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('orderSearchResult').innerHTML = '<p>No matching orders</p>';
+                return;
+            }
+
+            let html = '<ul>';
+            filtered.forEach(order => {
+                html += `<li>${order.orderId} - ${order.itemId} - Qty: ${order.quantity} - ${order.status} - ${order.totalAmount.toFixed(2)}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('orderSearchResult').innerHTML = html;
         }
     </script>
 </body>
