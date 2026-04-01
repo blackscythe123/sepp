@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Course Registration System</title>
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
+    </script>
+</head>
+<body>
+    <h1>Course Registration System</h1>
+    <p><a href="welcome.html">Welcome Page</a> <button onclick="logout()">Logout</button></p>
+
+    <h2>Add Course</h2>
+    <form id="courseForm">
+        <input type="text" id="courseId" placeholder="Course ID" required>
+        <input type="text" id="courseName" placeholder="Course Name" required>
+        <input type="text" id="instructor" placeholder="Instructor" required>
+        <input type="text" id="schedule" placeholder="Schedule Slot (e.g. Mon-09AM)" required>
+        <input type="number" id="capacity" placeholder="Capacity" min="1" required>
+        <input type="number" id="fee" placeholder="Fee" min="0" required>
+        <button type="submit">Add Course</button>
+    </form>
+
+    <h2>Add Student</h2>
+    <form id="studentForm">
+        <input type="text" id="studentId" placeholder="Student ID" required>
+        <input type="text" id="studentName" placeholder="Student Name" required>
+        <input type="email" id="studentEmail" placeholder="Email" required>
+        <input type="text" id="studentPhone" placeholder="Phone (10 digits)" required>
+        <input type="text" id="department" placeholder="Department" required>
+        <input type="number" id="year" placeholder="Year" min="1" max="6" required>
+        <button type="submit">Add Student</button>
+    </form>
+
+    <h2>Register Student</h2>
+    <form id="registrationForm">
+        <input type="text" id="regStudentId" placeholder="Student ID" required>
+        <input type="text" id="regCourseId" placeholder="Course ID" required>
+        <button type="submit">Register</button>
+    </form>
+
+    <h2>Drop Registration</h2>
+    <form id="dropForm">
+        <input type="text" id="dropRegId" placeholder="Registration ID" required>
+        <input type="text" id="dropReason" placeholder="Reason" required>
+        <button type="submit">Drop</button>
+    </form>
+
+    <h2>Course Search</h2>
+    <input type="text" id="courseSearchInput" placeholder="ID / Name / Instructor">
+    <button onclick="searchCourses()">Search</button>
+    <div id="courseSearchResult"></div>
+
+    <h2>Registration Search</h2>
+    <input type="text" id="registrationSearchInput" placeholder="Student ID / Course ID">
+    <select id="registrationStatusFilter">
+        <option value="">All Status</option>
+        <option value="Active">Active</option>
+        <option value="Dropped">Dropped</option>
+        <option value="Waitlist">Waitlist</option>
+    </select>
+    <button onclick="searchRegistrations()">Search</button>
+    <div id="registrationSearchResult"></div>
+
+    <h2>Courses</h2>
+    <table border="1" id="courseTable">
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Instructor</th>
+            <th>Schedule</th>
+            <th>Capacity</th>
+            <th>Enrolled</th>
+            <th>Available</th>
+            <th>Fee</th>
+            <th>Action</th>
+        </tr>
+    </table>
+
+    <h2>Students</h2>
+    <table border="1" id="studentTable">
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Department</th>
+            <th>Year</th>
+            <th>Active Courses</th>
+            <th>Action</th>
+        </tr>
+    </table>
+
+    <h2>Active Registrations</h2>
+    <table border="1" id="registrationTable">
+        <tr>
+            <th>Reg ID</th>
+            <th>Student ID</th>
+            <th>Course ID</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+    </table>
+
+    <h2>Waitlist</h2>
+    <table border="1" id="waitlistTable">
+        <tr>
+            <th>Wait ID</th>
+            <th>Student ID</th>
+            <th>Course ID</th>
+            <th>Date</th>
+        </tr>
+    </table>
+
+    <h2>Drop History</h2>
+    <table border="1" id="dropHistoryTable">
+        <tr>
+            <th>Reg ID</th>
+            <th>Student ID</th>
+            <th>Course ID</th>
+            <th>Reason</th>
+            <th>Dropped At</th>
+        </tr>
+    </table>
+
+    <h2>Summary</h2>
+    <button onclick="showEnrollmentByCourse()">Enrollment by Course</button>
+    <button onclick="showDepartmentSummary()">Department-wise Enrollment</button>
+    <button onclick="showStudentLoadSummary()">Student Course Load</button>
+    <button onclick="showRevenueSummary()">Revenue Summary</button>
+    <button onclick="showRevenueByCourseSummary()">Revenue by Course</button>
+    <div id="summaryResult"></div>
+
+    <h2>Activity Log</h2>
+    <div id="activityLog"></div>
+
+    <h2>Status</h2>
+    <div id="message"></div>
+
+    <script>
+        let courses = [];
+        let students = [];
+        let registrations = [];
+        let waitlist = [];
+        let dropHistory = [];
+        let logs = [];
+        let regCounter = 1000;
+        let waitCounter = 5000;
+
+        function setMessage(text, isError) {
+            document.getElementById('message').innerHTML = '<p style="color:' + (isError ? 'red' : 'green') + '">' + text + '</p>';
+        }
+
+        function logAction(action) {
+            const entry = new Date().toLocaleString() + ' - ' + action;
+            logs.unshift(entry);
+            document.getElementById('activityLog').innerHTML = '<ul>' + logs.map(function(item) { return '<li>' + item + '</li>'; }).join('') + '</ul>';
+        }
+
+        function getCourse(courseId) {
+            return courses.find(function(c) { return c.id === courseId; });
+        }
+
+        function getStudent(studentId) {
+            return students.find(function(s) { return s.id === studentId; });
+        }
+
+        function getActiveCourseCount(studentId) {
+            return registrations.filter(function(r) { return r.studentId === studentId && r.status === 'Active'; }).length;
+        }
+
+        function hasScheduleConflict(studentId, course) {
+            const activeRegs = registrations.filter(function(r) { return r.studentId === studentId && r.status === 'Active'; });
+            for (let i = 0; i < activeRegs.length; i += 1) {
+                const existingCourse = getCourse(activeRegs[i].courseId);
+                if (existingCourse && existingCourse.schedule === course.schedule) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function displayCourses() {
+            const table = document.getElementById('courseTable');
+            table.innerHTML = '<tr><th>ID</th><th>Name</th><th>Instructor</th><th>Schedule</th><th>Capacity</th><th>Enrolled</th><th>Available</th><th>Fee</th><th>Action</th></tr>';
+
+            courses.forEach(function(course, index) {
+                const activeCount = registrations.filter(function(r) { return r.courseId === course.id && r.status === 'Active'; }).length;
+                const available = Math.max(course.capacity - activeCount, 0);
+                const row = table.insertRow();
+                row.insertCell(0).innerText = course.id;
+                row.insertCell(1).innerText = course.name;
+                row.insertCell(2).innerText = course.instructor;
+                row.insertCell(3).innerText = course.schedule;
+                row.insertCell(4).innerText = course.capacity;
+                row.insertCell(5).innerText = activeCount;
+                row.insertCell(6).innerText = available;
+                row.insertCell(7).innerText = course.fee;
+                row.insertCell(8).innerHTML = '<button onclick="deleteCourse(' + index + ')">Delete</button>';
+            });
+        }
+
+        function displayStudents() {
+            const table = document.getElementById('studentTable');
+            table.innerHTML = '<tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Department</th><th>Year</th><th>Active Courses</th><th>Action</th></tr>';
+
+            students.forEach(function(student, index) {
+                const row = table.insertRow();
+                row.insertCell(0).innerText = student.id;
+                row.insertCell(1).innerText = student.name;
+                row.insertCell(2).innerText = student.email;
+                row.insertCell(3).innerText = student.phone;
+                row.insertCell(4).innerText = student.department;
+                row.insertCell(5).innerText = student.year;
+                row.insertCell(6).innerText = getActiveCourseCount(student.id);
+                row.insertCell(7).innerHTML = '<button onclick="deleteStudent(' + index + ')">Delete</button>';
+            });
+        }
+
+        function displayRegistrations() {
+            const activeTable = document.getElementById('registrationTable');
+            const waitTable = document.getElementById('waitlistTable');
+            activeTable.innerHTML = '<tr><th>Reg ID</th><th>Student ID</th><th>Course ID</th><th>Status</th><th>Date</th></tr>';
+            waitTable.innerHTML = '<tr><th>Wait ID</th><th>Student ID</th><th>Course ID</th><th>Date</th></tr>';
+
+            registrations.forEach(function(reg) {
+                const row = activeTable.insertRow();
+                row.insertCell(0).innerText = reg.id;
+                row.insertCell(1).innerText = reg.studentId;
+                row.insertCell(2).innerText = reg.courseId;
+                row.insertCell(3).innerText = reg.status;
+                row.insertCell(4).innerText = reg.date;
+            });
+
+            waitlist.forEach(function(item) {
+                const row = waitTable.insertRow();
+                row.insertCell(0).innerText = item.id;
+                row.insertCell(1).innerText = item.studentId;
+                row.insertCell(2).innerText = item.courseId;
+                row.insertCell(3).innerText = item.date;
+            });
+        }
+
+        function displayDropHistory() {
+            const table = document.getElementById('dropHistoryTable');
+            table.innerHTML = '<tr><th>Reg ID</th><th>Student ID</th><th>Course ID</th><th>Reason</th><th>Dropped At</th></tr>';
+            dropHistory.forEach(function(item) {
+                const row = table.insertRow();
+                row.insertCell(0).innerText = item.registrationId;
+                row.insertCell(1).innerText = item.studentId;
+                row.insertCell(2).innerText = item.courseId;
+                row.insertCell(3).innerText = item.reason;
+                row.insertCell(4).innerText = item.droppedAt;
+            });
+        }
+
+        function refreshAllViews() {
+            displayCourses();
+            displayStudents();
+            displayRegistrations();
+            displayDropHistory();
+        }
+
+        function deleteCourse(index) {
+            const course = courses[index];
+            const hasActive = registrations.some(function(r) { return r.courseId === course.id && r.status === 'Active'; });
+            const hasWaitlist = waitlist.some(function(w) { return w.courseId === course.id; });
+
+            if (hasActive || hasWaitlist) {
+                setMessage('Cannot delete course with active registrations or waitlist entries', true);
+                return;
+            }
+
+            if (!confirm('Confirm delete course ' + course.id + '?')) {
+                return;
+            }
+
+            courses.splice(index, 1);
+            refreshAllViews();
+            logAction('Deleted course ' + course.id);
+            setMessage('Course deleted', false);
+        }
+
+        function deleteStudent(index) {
+            const student = students[index];
+            const hasActive = registrations.some(function(r) { return r.studentId === student.id && r.status === 'Active'; });
+            const hasWaitlist = waitlist.some(function(w) { return w.studentId === student.id; });
+
+            if (hasActive || hasWaitlist) {
+                setMessage('Cannot delete student with active registrations or waitlist entries', true);
+                return;
+            }
+
+            if (!confirm('Confirm delete student ' + student.id + '?')) {
+                return;
+            }
+
+            students.splice(index, 1);
+            refreshAllViews();
+            logAction('Deleted student ' + student.id);
+            setMessage('Student deleted', false);
+        }
+
+        function registerStudent(studentId, courseId) {
+            const student = getStudent(studentId);
+            const course = getCourse(courseId);
+
+            if (!student || !course) {
+                setMessage('Invalid student ID or course ID', true);
+                return;
+            }
+
+            const alreadyActive = registrations.some(function(r) {
+                return r.studentId === studentId && r.courseId === courseId && r.status === 'Active';
+            });
+            if (alreadyActive) {
+                setMessage('Student is already registered in this course', true);
+                return;
+            }
+
+            const alreadyWaiting = waitlist.some(function(w) {
+                return w.studentId === studentId && w.courseId === courseId;
+            });
+            if (alreadyWaiting) {
+                setMessage('Student is already in waitlist for this course', true);
+                return;
+            }
+
+            if (getActiveCourseCount(studentId) >= 5) {
+                setMessage('Student overload limit reached (max 5 active courses)', true);
+                return;
+            }
+
+            if (hasScheduleConflict(studentId, course)) {
+                setMessage('Schedule conflict: student already has a course in this slot', true);
+                return;
+            }
+
+            const activeCount = registrations.filter(function(r) { return r.courseId === courseId && r.status === 'Active'; }).length;
+            if (activeCount < course.capacity) {
+                const regId = 'REG' + regCounter;
+                regCounter += 1;
+                registrations.push({
+                    id: regId,
+                    studentId: studentId,
+                    courseId: courseId,
+                    status: 'Active',
+                    date: new Date().toLocaleDateString()
+                });
+                logAction('Registered ' + studentId + ' to ' + courseId + ' with ID ' + regId);
+                setMessage('Registration successful', false);
+            } else {
+                const waitId = 'W' + waitCounter;
+                waitCounter += 1;
+                waitlist.push({
+                    id: waitId,
+                    studentId: studentId,
+                    courseId: courseId,
+                    date: new Date().toLocaleDateString()
+                });
+                logAction('Course full. Added ' + studentId + ' to waitlist for ' + courseId + ' with ID ' + waitId);
+                setMessage('Course full. Student added to waitlist', false);
+            }
+
+            refreshAllViews();
+        }
+
+        function autoPromoteWaitlist(courseId) {
+            const course = getCourse(courseId);
+            if (!course) {
+                return;
+            }
+
+            const activeCount = registrations.filter(function(r) { return r.courseId === courseId && r.status === 'Active'; }).length;
+            if (activeCount >= course.capacity) {
+                return;
+            }
+
+            const nextIndex = waitlist.findIndex(function(w) { return w.courseId === courseId; });
+            if (nextIndex === -1) {
+                return;
+            }
+
+            const next = waitlist.splice(nextIndex, 1)[0];
+            const regId = 'REG' + regCounter;
+            regCounter += 1;
+            registrations.push({
+                id: regId,
+                studentId: next.studentId,
+                courseId: next.courseId,
+                status: 'Active',
+                date: new Date().toLocaleDateString()
+            });
+
+            logAction('Auto-promoted waitlist entry ' + next.id + ' to registration ' + regId);
+            setMessage('Waitlist auto-promotion completed for course ' + courseId, false);
+            refreshAllViews();
+        }
+
+        function dropRegistrationById(registrationId, reason) {
+            const regIndex = registrations.findIndex(function(r) { return r.id === registrationId && r.status === 'Active'; });
+            if (regIndex === -1) {
+                setMessage('Active registration not found', true);
+                return;
+            }
+
+            const reg = registrations[regIndex];
+            registrations.splice(regIndex, 1);
+            dropHistory.unshift({
+                registrationId: reg.id,
+                studentId: reg.studentId,
+                courseId: reg.courseId,
+                reason: reason,
+                droppedAt: new Date().toLocaleString()
+            });
+
+            logAction('Dropped registration ' + reg.id + ' (' + reg.studentId + ' from ' + reg.courseId + ')');
+            autoPromoteWaitlist(reg.courseId);
+            refreshAllViews();
+            setMessage('Registration dropped', false);
+        }
+
+        function searchCourses() {
+            const key = document.getElementById('courseSearchInput').value.trim().toLowerCase();
+            if (!key) {
+                document.getElementById('courseSearchResult').innerHTML = '<p>Please enter a search value</p>';
+                return;
+            }
+
+            const filtered = courses.filter(function(c) {
+                return c.id.toLowerCase().includes(key) ||
+                    c.name.toLowerCase().includes(key) ||
+                    c.instructor.toLowerCase().includes(key);
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('courseSearchResult').innerHTML = '<p>No courses found</p>';
+                return;
+            }
+
+            document.getElementById('courseSearchResult').innerHTML = '<ul>' + filtered.map(function(c) {
+                const activeCount = registrations.filter(function(r) { return r.courseId === c.id && r.status === 'Active'; }).length;
+                return '<li>' + c.id + ' - ' + c.name + ' - ' + c.instructor + ' - Available: ' + (c.capacity - activeCount) + '</li>';
+            }).join('') + '</ul>';
+        }
+
+        function searchRegistrations() {
+            const key = document.getElementById('registrationSearchInput').value.trim().toLowerCase();
+            const statusFilter = document.getElementById('registrationStatusFilter').value;
+            if (!key) {
+                document.getElementById('registrationSearchResult').innerHTML = '<p>Please enter a search value</p>';
+                return;
+            }
+
+            const active = registrations.filter(function(r) {
+                const matchKey = r.studentId.toLowerCase().includes(key) || r.courseId.toLowerCase().includes(key);
+                return (!statusFilter || statusFilter === 'Active') && matchKey;
+            });
+            const waiting = waitlist.filter(function(w) {
+                const matchKey = w.studentId.toLowerCase().includes(key) || w.courseId.toLowerCase().includes(key);
+                return (!statusFilter || statusFilter === 'Waitlist') && matchKey;
+            });
+            const dropped = dropHistory.filter(function(d) {
+                const matchKey = d.studentId.toLowerCase().includes(key) || d.courseId.toLowerCase().includes(key);
+                return (!statusFilter || statusFilter === 'Dropped') && matchKey;
+            });
+
+            let html = '';
+            if (active.length > 0) {
+                html += '<p>Active</p><ul>' + active.map(function(r) {
+                    return '<li>' + r.id + ' - ' + r.studentId + ' - ' + r.courseId + '</li>';
+                }).join('') + '</ul>';
+            }
+            if (waiting.length > 0) {
+                html += '<p>Waitlist</p><ul>' + waiting.map(function(w) {
+                    return '<li>' + w.id + ' - ' + w.studentId + ' - ' + w.courseId + '</li>';
+                }).join('') + '</ul>';
+            }
+            if (dropped.length > 0) {
+                html += '<p>Dropped</p><ul>' + dropped.map(function(d) {
+                    return '<li>' + d.registrationId + ' - ' + d.studentId + ' - ' + d.courseId + ' - ' + d.reason + '</li>';
+                }).join('') + '</ul>';
+            }
+
+            if (!html) {
+                html = '<p>No matching registrations found</p>';
+            }
+
+            document.getElementById('registrationSearchResult').innerHTML = html;
+        }
+
+        function showEnrollmentByCourse() {
+            if (courses.length === 0) {
+                document.getElementById('summaryResult').innerHTML = '<p>No courses available</p>';
+                return;
+            }
+
+            let html = '<h3>Enrollment by Course</h3><ul>';
+            courses.forEach(function(c) {
+                const active = registrations.filter(function(r) { return r.courseId === c.id && r.status === 'Active'; }).length;
+                const waiting = waitlist.filter(function(w) { return w.courseId === c.id; }).length;
+                html += '<li>' + c.id + ': Active ' + active + '/' + c.capacity + ', Waitlist ' + waiting + '</li>';
+            });
+            html += '</ul>';
+            document.getElementById('summaryResult').innerHTML = html;
+        }
+
+        function showDepartmentSummary() {
+            const map = {};
+            registrations.forEach(function(r) {
+                if (r.status !== 'Active') {
+                    return;
+                }
+                const student = getStudent(r.studentId);
+                if (!student) {
+                    return;
+                }
+                if (!map[student.department]) {
+                    map[student.department] = 0;
+                }
+                map[student.department] += 1;
+            });
+
+            let html = '<h3>Department-wise Enrollment</h3><ul>';
+            const keys = Object.keys(map);
+            if (keys.length === 0) {
+                html += '<li>No active enrollments</li>';
+            } else {
+                keys.forEach(function(key) {
+                    html += '<li>' + key + ': ' + map[key] + '</li>';
+                });
+            }
+            html += '</ul>';
+            document.getElementById('summaryResult').innerHTML = html;
+        }
+
+        function showStudentLoadSummary() {
+            let html = '<h3>Student Course Load</h3><ul>';
+            if (students.length === 0) {
+                html += '<li>No students available</li>';
+            } else {
+                students.forEach(function(s) {
+                    html += '<li>' + s.id + ' - ' + s.name + ': ' + getActiveCourseCount(s.id) + ' active course(s)</li>';
+                });
+            }
+            html += '</ul>';
+            document.getElementById('summaryResult').innerHTML = html;
+        }
+
+        function showRevenueSummary() {
+            let total = 0;
+            let activeRegistrationCount = 0;
+            registrations.forEach(function(r) {
+                if (r.status !== 'Active') {
+                    return;
+                }
+                activeRegistrationCount += 1;
+                const course = getCourse(r.courseId);
+                if (course) {
+                    total += Number(course.fee);
+                }
+            });
+
+            const availableSeats = courses.reduce(function(sum, course) {
+                const activeCount = registrations.filter(function(r) { return r.courseId === course.id && r.status === 'Active'; }).length;
+                return sum + Math.max(course.capacity - activeCount, 0);
+            }, 0);
+
+            document.getElementById('summaryResult').innerHTML =
+                '<h3>Revenue Summary</h3>' +
+                '<p>Total Active Registrations: ' + activeRegistrationCount + '</p>' +
+                '<p>Total Revenue: ' + total + '</p>' +
+                '<p>Total Available Seats: ' + availableSeats + '</p>';
+        }
+
+        function showRevenueByCourseSummary() {
+            const courseRevenue = {};
+            let grandTotal = 0;
+
+            registrations.forEach(function(r) {
+                if (r.status !== 'Active') {
+                    return;
+                }
+
+                const course = getCourse(r.courseId);
+                if (!course) {
+                    return;
+                }
+
+                if (!courseRevenue[course.id]) {
+                    courseRevenue[course.id] = {
+                        name: course.name,
+                        fee: course.fee,
+                        count: 0,
+                        revenue: 0
+                    };
+                }
+
+                courseRevenue[course.id].count += 1;
+                courseRevenue[course.id].revenue += Number(course.fee);
+                grandTotal += Number(course.fee);
+            });
+
+            const ids = Object.keys(courseRevenue);
+            if (ids.length === 0) {
+                document.getElementById('summaryResult').innerHTML = '<h3>Revenue by Course</h3><p>No active registrations</p>';
+                return;
+            }
+
+            let html = '<h3>Revenue by Course</h3><table border="1"><tr><th>Course ID</th><th>Name</th><th>Fee</th><th>Active Students</th><th>Revenue</th></tr>';
+            ids.forEach(function(id) {
+                const item = courseRevenue[id];
+                html += '<tr><td>' + id + '</td><td>' + item.name + '</td><td>' + item.fee + '</td><td>' + item.count + '</td><td>' + item.revenue + '</td></tr>';
+            });
+            html += '</table><p><strong>Total Revenue: ' + grandTotal + '</strong></p>';
+            document.getElementById('summaryResult').innerHTML = html;
+        }
+
+        document.getElementById('courseForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const course = {
+                id: document.getElementById('courseId').value.trim().toUpperCase(),
+                name: document.getElementById('courseName').value.trim(),
+                instructor: document.getElementById('instructor').value.trim(),
+                schedule: document.getElementById('schedule').value.trim(),
+                capacity: parseInt(document.getElementById('capacity').value, 10),
+                fee: parseFloat(document.getElementById('fee').value)
+            };
+
+            if (!course.id || !course.name || !course.instructor || !course.schedule || Number.isNaN(course.capacity) || Number.isNaN(course.fee)) {
+                setMessage('All course fields are required', true);
+                return;
+            }
+            if (course.capacity < 1 || course.fee < 0) {
+                setMessage('Capacity must be at least 1 and fee cannot be negative', true);
+                return;
+            }
+            if (!/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)-([0][1-9]|1[0-2])(AM|PM)$/i.test(course.schedule)) {
+                setMessage('Schedule format must be like Mon-09AM', true);
+                return;
+            }
+            if (courses.some(function(c) { return c.id === course.id; })) {
+                setMessage('Course ID already exists', true);
+                return;
+            }
+
+            courses.push(course);
+            displayCourses();
+            logAction('Added course ' + course.id);
+            setMessage('Course added successfully', false);
+            event.target.reset();
+        });
+
+        document.getElementById('studentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const student = {
+                id: document.getElementById('studentId').value.trim().toUpperCase(),
+                name: document.getElementById('studentName').value.trim(),
+                email: document.getElementById('studentEmail').value.trim(),
+                phone: document.getElementById('studentPhone').value.trim(),
+                department: document.getElementById('department').value.trim(),
+                year: parseInt(document.getElementById('year').value, 10)
+            };
+
+            if (!student.id || !student.name || !student.email || !student.phone || !student.department || Number.isNaN(student.year)) {
+                setMessage('All student fields are required', true);
+                return;
+            }
+            if (student.year < 1 || student.year > 6) {
+                setMessage('Year must be between 1 and 6', true);
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(student.email)) {
+                setMessage('Invalid email format', true);
+                return;
+            }
+            if (!/^\d{10}$/.test(student.phone.replace(/\D/g, ''))) {
+                setMessage('Phone must contain exactly 10 digits', true);
+                return;
+            }
+            if (students.some(function(s) { return s.id === student.id; })) {
+                setMessage('Student ID already exists', true);
+                return;
+            }
+
+            students.push(student);
+            displayStudents();
+            logAction('Added student ' + student.id);
+            setMessage('Student added successfully', false);
+            event.target.reset();
+        });
+
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const studentId = document.getElementById('regStudentId').value.trim().toUpperCase();
+            const courseId = document.getElementById('regCourseId').value.trim().toUpperCase();
+            if (!studentId || !courseId) {
+                setMessage('Student ID and Course ID are required', true);
+                return;
+            }
+            registerStudent(studentId, courseId);
+            event.target.reset();
+        });
+
+        document.getElementById('dropForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const regId = document.getElementById('dropRegId').value.trim().toUpperCase();
+            const reason = document.getElementById('dropReason').value.trim();
+            if (!regId || !reason) {
+                setMessage('Registration ID and reason are required', true);
+                return;
+            }
+            dropRegistrationById(regId, reason);
+            event.target.reset();
+        });
+
+        const DB_NAME = 'CourseRegistrationSystemDB';
+        const STORE_NAME = 'state';
+
+        function openDB() {
+            return new Promise(function(resolve, reject) {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = function() { resolve(request.result); };
+                request.onerror = function() { reject(request.error); };
+            });
+        }
+
+        async function saveState() {
+            const db = await openDB();
+            return new Promise(function(resolve, reject) {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put({
+                    id: 'appState',
+                    courses: courses,
+                    students: students,
+                    registrations: registrations,
+                    waitlist: waitlist,
+                    dropHistory: dropHistory,
+                    logs: logs,
+                    regCounter: regCounter,
+                    waitCounter: waitCounter
+                });
+                tx.oncomplete = function() { resolve(); };
+                tx.onerror = function() { reject(tx.error); };
+            });
+        }
+
+        async function loadState() {
+            const db = await openDB();
+            return new Promise(function(resolve, reject) {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const request = tx.objectStore(STORE_NAME).get('appState');
+                request.onsuccess = function() {
+                    const data = request.result;
+                    if (data) {
+                        courses = data.courses || [];
+                        students = data.students || [];
+                        registrations = data.registrations || [];
+                        waitlist = data.waitlist || [];
+                        dropHistory = data.dropHistory || [];
+                        logs = data.logs || [];
+                        regCounter = data.regCounter || 1000;
+                        waitCounter = data.waitCounter || 5000;
+                    }
+                    resolve();
+                };
+                request.onerror = function() { reject(request.error); };
+            });
+        }
+
+        async function initPersistence() {
+            await loadState();
+            refreshAllViews();
+            document.getElementById('activityLog').innerHTML = '<ul>' + logs.map(function(item) { return '<li>' + item + '</li>'; }).join('') + '</ul>';
+        }
+
+        setInterval(function() { saveState().catch(function() {}); }, 1000);
+        window.addEventListener('beforeunload', function() { saveState().catch(function() {}); });
+        initPersistence().catch(function() {});
+    </script>
+</body>
+</html>

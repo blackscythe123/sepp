@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Course Registration System - Exam Question</title>
+</head>
+<body>
+    <h1>COURSE REGISTRATION SYSTEM</h1>
+    <h3>Practical Examination Question (Part C Implementation)</h3>
+
+    <h2>Scenario:</h2>
+    <p>A college wants a system to manage courses, students, and course registrations. The admin should be able to add courses/students, register students to courses, and monitor capacity and fee summaries.</p>
+
+    <h2>Requirements:</h2>
+    <h3>Functional Requirements:</h3>
+    <ul>
+        <li>Add a new course with Course ID, Course Name, Instructor, Capacity, and Fee</li>
+        <li>Add a new student with Student ID, Student Name, Department, and Year</li>
+        <li>Register a student to a selected course with duplicate and capacity checks</li>
+        <li>Drop a registration and free up seats</li>
+        <li>View all courses, students, and registrations in separate tables</li>
+        <li>Search courses by ID/name/instructor and search registrations by Student ID/Course ID</li>
+        <li>Show summary reports: seat availability, enrollment by course, student load, and total fee revenue</li>
+        <li>Maintain activity log with timestamps for all major actions</li>
+    </ul>
+
+    <h3>Non-Functional Requirements:</h3>
+    <ul>
+        <li>Simple and clearly divided interface using only HTML and JavaScript</li>
+        <li>Input validation and user-friendly success/error messages</li>
+        <li>Immediate UI updates after each operation</li>
+        <li>Persistent data across refresh using browser storage (IndexedDB)</li>
+    </ul>
+
+    <h2>Implementation Guidelines:</h2>
+    <ol>
+        <li>Use only HTML + Vanilla JavaScript (No CSS and no external libraries)</li>
+        <li>Store data in arrays: courses, students, registrations, waitlist, and logs</li>
+        <li>Use helper functions for rendering tables and computing summaries</li>
+        <li>Include delete/drop actions in tables where appropriate</li>
+        <li>Implement login guard using sessionStorage for protected pages</li>
+    </ol>
+
+    <h2>Additional Challenge Questions:</h2>
+    <ul>
+        <li>Add waitlist handling: if a course is full, registrations should move to waitlist and auto-promote when seats open</li>
+        <li>Add overload validation: prevent students from registering in more than 5 active courses</li>
+        <li>Add department-wise enrollment summary</li>
+        <li>Add conflict check to block registering two courses with the same schedule slot</li>
+        <li>Track dropped registrations in a historical ledger with reason and timestamp</li>
+    </ul>
+
+    <h2>Deliverables:</h2>
+    <p>Create index.html that satisfies all requirements and challenge features with a fully functional interface and logic.</p>
+
+    <h2>Marks Distribution (Total: 20 marks):</h2>
+    <ul>
+        <li>UI and Section Structure: 4 marks</li>
+        <li>Course and Student Management: 4 marks</li>
+        <li>Registration and Drop Flow: 4 marks</li>
+        <li>Search + Reporting Features: 4 marks</li>
+        <li>Validation + Logging + Persistence: 4 marks</li>
+    </ul>
+
+    <hr>
+    <p><strong>Time Limit:</strong> 60 minutes</p>
+    <p><strong>Language:</strong> HTML + Vanilla JavaScript (No CSS)</p>
+</body>
+</html>
