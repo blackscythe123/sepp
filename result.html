@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>result page </title>
+</head>
+<body>
+    <table border="1">
+        <tr>
+            <th>name</th>
+            <th>mark</th>
+            <th>cgpa</th>
+        </tr>
+        <tr>
+            <td id="name"></td>
+            <td id="mark"></td>
+            <td id="cgpa"></td>
+        </tr>
+    </table>
+    <script>
+        const p = new URLSearchParams(window.location.search)
+        let name =p.get("name");
+        let s1 = parseInt(p.get("s1"));
+    let s2 = parseInt(p.get("s2"));
+    let s3 = parseInt(p.get("s3"));
+    let s4 = parseInt(p.get("s4"));
+    let s5 = parseInt(p.get("s5"));
+    let total =s1+s2+s3+s4+s5;
+       let avg = total / 5;
+
+    let cgpa = avg / 10;
+    document.getElementById("name").innerText=name;
+    document.getElementById("mark").innerText=total;
+    document.getElementById("cgpa").innerText=cgpa;
+    </script>
+</body>
+</html>
